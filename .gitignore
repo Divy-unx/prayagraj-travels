@@ -1,0 +1,37 @@
+# ── Environment secrets (never commit — commit .env.example instead) ──────────
+.env
+.env.example
+.env.*.local
+
+# ── Java / Maven ──────────────────────────────────────────────────────────────
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# ── Node / Vite ───────────────────────────────────────────────────────────────
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/.vite/
+frontend-react/coverage/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+nohup.out
+logs/
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.vscode/settings.json
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db

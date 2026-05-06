@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { @apply font-sans text-slate-800 bg-slate-50 antialiased overflow-x-hidden; }
+  a { @apply no-underline; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { @apply bg-slate-100; }
+  ::-webkit-scrollbar-thumb { @apply bg-primary-400 rounded-full; }
+}
+
+@layer components {
+  /* Glass card */
+  .glass { @apply bg-white/80 backdrop-blur-md border border-white/30; }
+
+  /* Section headings */
+  .section-tag { @apply inline-flex items-center gap-2 bg-primary-50 text-primary-600 text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3; }
+  .section-title { @apply text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight; }
+  .section-sub { @apply text-slate-500 mt-3 text-base md:text-lg max-w-2xl; }
+
+  /* Gradient text */
+  .grad-text { @apply bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent; }
+
+  /* Seat colors */
+  .seat-available { @apply bg-white border-2 border-emerald-400 hover:bg-emerald-50 cursor-pointer; }
+  .seat-selected   { @apply bg-emerald-500 border-2 border-emerald-600 text-white; }
+  .seat-booked     { @apply bg-slate-200 border-2 border-slate-300 text-slate-400 cursor-not-allowed; }
+  .seat-held       { @apply bg-amber-50 border-2 border-amber-400 text-amber-600 cursor-not-allowed; }
+  .seat-window     { @apply bg-white border-2 border-blue-400 hover:bg-blue-50 cursor-pointer; }
+
+  /* Form inputs */
+  .form-input { @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all; }
+  .form-label { @apply block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5; }
+  .form-error { @apply text-red-500 text-xs mt-1 font-medium; }
+
+  /* Operator badge colors */
+  .op-upsrtc { background: #1A56DB; }
+  .op-pcb    { background: #00B562; }
+  .op-triveni{ background: #D97706; }
+
+  /* Page transition */
+  .page-enter { @apply animate-fade-in; }
+
+  /* Skeleton pulse */
+  .skeleton { @apply bg-slate-200 rounded-lg animate-pulse; }
+
+  /* Divider */
+  .divider { @apply border-t border-slate-100 my-6; }
+
+  /* Status badges */
+  .badge-confirmed { @apply bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .badge-cancelled { @apply bg-red-50 text-red-700 border border-red-200; }
+  .badge-pending   { @apply bg-amber-50 text-amber-700 border border-amber-200; }
+  .badge-held      { @apply bg-blue-50 text-blue-700 border border-blue-200; }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
