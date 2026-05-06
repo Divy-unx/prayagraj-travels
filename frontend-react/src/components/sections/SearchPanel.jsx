@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeftRight, MapPin, Calendar, Search, AlertCircle } from 'lucide-react'
+import { ArrowLeftRight, MapPin, Calendar, Search, AlertCircle, Navigation } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { STOPS } from '../../utils/constants'
 import { today } from '../../utils/helpers'
@@ -10,70 +10,227 @@ import { busService } from '../../services/api'
 import toast from 'react-hot-toast'
 import logger from '../../utils/logger'
 
-function AutocompleteField({ label, value, onChange, placeholder, accent = 'primary', error }) {
-  const [suggestions, setSuggestions] = useState([])
+// ── Modern Dropdown Autocomplete ─────────────────────────────────────────────
+
+function LocationDropdown({ label, value, onChange, placeholder, compact = false, error }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState(value || '')
+  const [suggestions, setSuggestions] = useState(STOPS)
+  const [highlighted, setHighlighted] = useState(-1)
+  const wrapperRef = useRef(null)
+  const inputRef = useRef(null)
   const debounceRef = useRef(null)
   const abortRef = useRef(null)
+  const listRef = useRef(null)
 
+  // Keep query in sync with external value changes (e.g., swap, quick picks)
   useEffect(() => {
-    // Debounce the suggestion fetch (250ms)
+    setQuery(value || '')
+  }, [value])
+
+  // Fetch suggestions on query change
+  useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (abortRef.current) abortRef.current.abort()
 
     debounceRef.current = setTimeout(async () => {
-      const query = value?.trim() || ''
-      if (!query) {
+      const q = query?.trim() || ''
+      if (!q) {
         setSuggestions(STOPS)
         return
       }
 
       try {
         abortRef.current = new AbortController()
-        const serverSuggestions = await busService.suggestLocations(query, abortRef.current.signal)
+        const serverSuggestions = await busService.suggestLocations(q, abortRef.current.signal)
         setSuggestions(
           Array.from(
             new Set([
               ...(serverSuggestions || []),
-              ...STOPS.filter(stop => stop.toLowerCase().includes(query.toLowerCase())),
+              ...STOPS.filter(stop => stop.toLowerCase().includes(q.toLowerCase())),
             ])
-          ).slice(0, 8)
+          ).slice(0, 10)
         )
       } catch (err) {
         if (err.name === 'AbortError' || err.name === 'CanceledError') return
-        logger.warn('Autocomplete', 'Server suggestions failed, using local', { query })
+        logger.warn('Autocomplete', 'Server suggestions failed, using local', { query: q })
         setSuggestions(
-          STOPS.filter(stop => stop.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
+          STOPS.filter(stop => stop.toLowerCase().includes(q.toLowerCase())).slice(0, 10)
         )
       }
-    }, 250)
+    }, 200)
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
       if (abortRef.current) abortRef.current.abort()
     }
-  }, [value])
+  }, [query])
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlighted >= 0 && listRef.current) {
+      const item = listRef.current.children[highlighted]
+      if (item) item.scrollIntoView({ block: 'nearest' })
+    }
+  }, [highlighted])
+
+  const selectItem = (item) => {
+    setQuery(item)
+    onChange(item)
+    setOpen(false)
+    setHighlighted(-1)
+  }
+
+  const handleKeyDown = (e) => {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setOpen(true)
+        e.preventDefault()
+      }
+      return
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setHighlighted(h => (h + 1) % suggestions.length)
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setHighlighted(h => (h - 1 + suggestions.length) % suggestions.length)
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (highlighted >= 0 && suggestions[highlighted]) {
+          selectItem(suggestions[highlighted])
+        }
+        break
+      case 'Escape':
+        setOpen(false)
+        setHighlighted(-1)
+        break
+    }
+  }
+
+  // Highlight matching text
+  const renderHighlightedText = (text) => {
+    const q = query?.trim()
+    if (!q) return text
+    const idx = text.toLowerCase().indexOf(q.toLowerCase())
+    if (idx === -1) return text
+    return (
+      <>
+        {text.slice(0, idx)}
+        <span className="text-primary-600 font-extrabold">{text.slice(idx, idx + q.length)}</span>
+        {text.slice(idx + q.length)}
+      </>
+    )
+  }
+
+  const textColor = compact ? 'text-slate-800' : 'text-white'
+  const placeholderColor = compact ? 'placeholder-slate-400' : 'placeholder-white/40'
 
   return (
-    <div className="relative flex-1 min-w-0">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+    <div className="relative flex-1 min-w-0" ref={wrapperRef}>
+      <p className={`text-[10px] font-bold uppercase tracking-widest ${compact ? 'text-slate-400' : 'text-white/60'}`}>
+        {label}
+      </p>
       <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
+        ref={inputRef}
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value)
+          onChange(e.target.value)
+          setOpen(true)
+          setHighlighted(-1)
+        }}
+        onFocus={() => { setOpen(true); setHighlighted(-1) }}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={`form-input mt-1 ${accent === 'accent' ? 'focus:ring-accent-500' : ''} ${error ? 'border-red-400 focus:ring-red-500' : ''}`}
-        list={`${label.toLowerCase()}-options`}
+        autoComplete="off"
+        className={`block w-full text-sm font-bold bg-transparent border-0 focus:ring-0 p-0 mt-1 cursor-text ${textColor} ${placeholderColor} ${error ? 'text-red-500' : ''}`}
       />
-      <datalist id={`${label.toLowerCase()}-options`}>
-        {suggestions.map(item => <option key={item} value={item} />)}
-      </datalist>
       {error && (
         <p className="flex items-center gap-1 text-red-500 text-xs mt-1 font-medium">
           <AlertCircle className="w-3 h-3 flex-shrink-0" /> {error}
         </p>
       )}
+
+      {/* Dropdown */}
+      {open && suggestions.length > 0 && (
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-fade-in">
+          {/* Header */}
+          <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              {query?.trim() ? `Matching stops` : 'All Prayagraj stops'}
+            </p>
+          </div>
+
+          {/* List */}
+          <ul
+            ref={listRef}
+            className="max-h-64 overflow-y-auto py-1 no-scrollbar"
+            role="listbox"
+          >
+            {suggestions.map((item, i) => (
+              <li
+                key={item}
+                role="option"
+                aria-selected={highlighted === i}
+                onMouseEnter={() => setHighlighted(i)}
+                onClick={() => selectItem(item)}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-100 ${
+                  highlighted === i
+                    ? 'bg-primary-50'
+                    : 'hover:bg-slate-50'
+                } ${value === item ? 'bg-primary-50/60' : ''}`}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  highlighted === i
+                    ? 'bg-primary-100 text-primary-600'
+                    : 'bg-slate-100 text-slate-400'
+                }`}>
+                  <Navigation className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold truncate ${
+                    highlighted === i ? 'text-primary-700' : 'text-slate-800'
+                  }`}>
+                    {renderHighlightedText(item)}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium">Prayagraj</p>
+                </div>
+                {value === item && (
+                  <span className="text-primary-500 text-xs font-bold">✓</span>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          {/* Footer */}
+          <div className="px-4 py-2 border-t border-slate-100 bg-slate-50">
+            <p className="text-[10px] text-slate-400 text-center font-medium">
+              ↑↓ to navigate • Enter to select • Esc to close
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
+// ── Search Panel ─────────────────────────────────────────────────────────────
 
 export default function SearchPanel({ compact = false }) {
   const navigate = useNavigate()
@@ -140,12 +297,12 @@ export default function SearchPanel({ compact = false }) {
         {/* From */}
         <div className={`flex-1 flex items-start gap-3 px-4 py-3 ${fieldHover} transition-colors rounded-xl`}>
           <MapPin className={`w-5 h-5 flex-shrink-0 mt-5 ${compact ? 'text-primary-400' : 'text-white/60'}`} />
-          <AutocompleteField
+          <LocationDropdown
             label="From"
             value={origin}
             onChange={(v) => { setOrigin(v); if (errors.origin) setErrors(e => ({ ...e, origin: '' })) }}
             placeholder="Search source stop"
-            accent={compact ? 'primary' : 'accent'}
+            compact={compact}
             error={errors.origin}
           />
         </div>
@@ -164,12 +321,12 @@ export default function SearchPanel({ compact = false }) {
         {/* To */}
         <div className={`flex-1 flex items-start gap-3 px-4 py-3 ${fieldHover} transition-colors rounded-xl`}>
           <MapPin className={`w-5 h-5 flex-shrink-0 mt-5 ${compact ? 'text-accent-500' : 'text-white/60'}`} />
-          <AutocompleteField
+          <LocationDropdown
             label="To"
             value={dest}
             onChange={(v) => { setDest(v); if (errors.destination) setErrors(e => ({ ...e, destination: '' })) }}
             placeholder="Search destination stop"
-            accent={compact ? 'primary' : 'accent'}
+            compact={compact}
             error={errors.destination}
           />
         </div>
