@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import { STATS } from '../utils/constants'
 
+const TEAM = [
+  { name: 'Divyanshu Mishra', role: 'Founder & CEO', image: 'https://i.pravatar.cc/150?u=ravi' },
+  { name: 'Desh Deepak', role: 'Head of Operations', image: 'https://i.pravatar.cc/150?u=sneha' },
+  { name: 'Shivaji Singh', role: 'Lead Developer', image: 'https://i.pravatar.cc/150?u=amit' },
+  { name: 'Kislay Sahu', role: 'Customer Success', image: 'https://i.pravatar.cc/150?u=pooja' },
+]
+
 const milestones = [
   { year: '2023', event: 'PrayagTravels founded with 10 buses on 2 routes' },
   { year: '2024', event: 'Expanded to all 14 city stops. Crossed 5,000 daily passengers' },
@@ -88,6 +95,25 @@ export default function AboutPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* The Team */}
+      <section className="py-16 bg-slate-50 border-t border-slate-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <span className="section-tag">👥 Our Team</span>
+            <h2 className="section-title mt-1">The People Behind PrayagTravels</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+            {TEAM.map(member => (
+              <div key={member.name} className="bg-white rounded-2xl shadow-card p-6 text-center border border-slate-100 hover:shadow-card-hover transition-shadow duration-300">
+                <img src={member.image} alt={member.name} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-primary-50 object-cover" />
+                <h3 className="font-bold text-slate-900 text-lg">{member.name}</h3>
+                <p className="text-sm text-slate-500 font-medium mt-1">{member.role}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
