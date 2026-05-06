@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import { STATS } from '../utils/constants'
 
-
 const milestones = [
   { year: '2023', event: 'PrayagTravels founded with 10 buses on 2 routes' },
   { year: '2024', event: 'Expanded to all 14 city stops. Crossed 5,000 daily passengers' },
@@ -114,7 +113,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
 
       {/* CTA */}
       <section className="py-16 bg-white">

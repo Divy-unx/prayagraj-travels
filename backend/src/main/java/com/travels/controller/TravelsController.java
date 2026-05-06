@@ -27,14 +27,11 @@ import com.travels.service.TravelsService;
 
 @RestController
 @RequestMapping("/api/travels")
-@CrossOrigin(
-    origins = {"http://localhost:3000", "http://localhost:5173", "https://prayagraj-travels.vercel.app"},
-    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS},
-    allowedHeaders = {"Content-Type", "Accept", "Authorization", "X-Requested-With"},
-    exposedHeaders = {"Content-Type", "X-Total-Count"},
-    allowCredentials = "false",
-    maxAge = 3600
-)
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173",
+        "https://prayagraj-travels.vercel.app" }, methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
+                RequestMethod.DELETE, RequestMethod.OPTIONS }, allowedHeaders = { "Content-Type", "Accept",
+                        "Authorization", "X-Requested-With" }, exposedHeaders = { "Content-Type",
+                                "X-Total-Count" }, allowCredentials = "false", maxAge = 3600)
 public class TravelsController {
 
     private static final Logger log = LoggerFactory.getLogger(TravelsController.class);
@@ -42,7 +39,7 @@ public class TravelsController {
     @Autowired
     private TravelsService travelsService;
 
-    // ── Health ────────────────────────────────────────────────────────────────
+    // Health
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
@@ -52,7 +49,7 @@ public class TravelsController {
                 "version", "1.0.0"));
     }
 
-    // ── Bus ──────────────────────────────────────────────────────────────────
+    // Bus
 
     @GetMapping("/buses")
     public ResponseEntity<List<Map<String, Object>>> getAllBuses() {
@@ -74,11 +71,10 @@ public class TravelsController {
         }
     }
 
-    // ── Search ────────────────────────────────────────────────────────────────
+    // Search
 
-    /**
-     * GET /api/travels/search?source=Civil+Lines&destination=Naini
-     */
+    // GET /api/travels/search ? source = Civil Lines & destination=Naini
+
     @GetMapping("/search")
     public ResponseEntity<?> searchBuses(
             @RequestParam String source,
@@ -124,11 +120,9 @@ public class TravelsController {
         }
     }
 
-    // ── Seat Map ─────────────────────────────────────────────────────────────
+    // Seat Map
+    // GET /api/travels/seats ? busId=1 & travelDate = 2024-12-25
 
-    /**
-     * GET /api/travels/seats?busId=1&travelDate=2024-12-25
-     */
     @GetMapping("/seats")
     public ResponseEntity<?> getSeatMap(
             @RequestParam Long busId,
@@ -141,12 +135,12 @@ public class TravelsController {
         }
     }
 
-    // ── Seat Hold ────────────────────────────────────────────────────────────
+    // Seat Hold
+    // POST /api/travels/seats/hold
+    Body:
 
-    /**
-     * POST /api/travels/seats/hold
-     * Body: { busId, seatNumber, travelDate, userId }
-     */
+    { busId, seatNumber, travelDate, userId }
+
     @PostMapping("/seats/hold")
     public ResponseEntity<Map<String, Object>> holdSeat(@RequestBody SeatHoldRequest req) {
         Map<String, Object> result = travelsService.holdSeat(req);
@@ -258,8 +252,8 @@ public class TravelsController {
 
     @DeleteMapping("/favorites")
     public ResponseEntity<?> deleteFavoriteRoute(@RequestParam long userId,
-                                                 @RequestParam String source,
-                                                 @RequestParam String destination) {
+            @RequestParam String source,
+            @RequestParam String destination) {
         return ResponseEntity.ok(travelsService.deleteFavoriteRoute(userId, source, destination));
     }
 
