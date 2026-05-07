@@ -3,11 +3,32 @@ import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import { STATS } from '../utils/constants'
 
+import divyanshuImg from '../assets/team/divyanshu.jpeg'
+import deepakImg from '../assets/team/deepak.jpeg'
+import shivajiImg from '../assets/team/shivaji.jpeg'
+import kislayImg from '../assets/team/kislay.jpeg'
+
 const TEAM = [
-  { name: 'Divyanshu Mishra', role: 'Founder & CEO', image: 'c:\\Users\\kisla\\Downloads\\divyanshu.jpeg' },
-  { name: 'Desh Deepak', role: 'Head of Operations', image: 'c:\\Users\\kisla\\Downloads\\deepak.jpeg' },
-  { name: 'Shivaji Singh', role: 'Lead Developer', image: 'c:\\Users\\kisla\\Downloads\\shivaji.jpeg' },
-  { name: 'Kislay Sahu', role: 'Customer Success', image: 'c:\\Users\\kisla\\Downloads\\kislay.jpeg' },
+  {
+    name: 'Divyanshu Mishra',
+    role: 'Founder & CEO',
+    image: divyanshuImg
+  },
+  {
+    name: 'Desh Deepak',
+    role: 'Head of Operations',
+    image: deepakImg
+  },
+  {
+    name: 'Shivaji Singh',
+    role: 'Lead Developer',
+    image: shivajiImg
+  },
+  {
+    name: 'Kislay Sahu',
+    role: 'Customer Success',
+    image: kislayImg
+  },
 ]
 
 const milestones = [
