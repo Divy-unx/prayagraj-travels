@@ -4,10 +4,10 @@ import Button from '../components/ui/Button'
 import { STATS } from '../utils/constants'
 
 const TEAM = [
-  { name: 'Divyanshu Mishra', role: 'Founder & CEO', image: 'https://i.pravatar.cc/150?u=ravi' },
-  { name: 'Desh Deepak', role: 'Head of Operations', image: 'https://i.pravatar.cc/150?u=sneha' },
-  { name: 'Shivaji Singh', role: 'Lead Developer', image: 'https://i.pravatar.cc/150?u=amit' },
-  { name: 'Kislay Sahu', role: 'Customer Success', image: 'https://i.pravatar.cc/150?u=pooja' },
+  { name: 'Divyanshu Mishra', role: 'Founder & CEO', image: 'c:\\Users\\kisla\\Downloads\\divyanshu.jpeg' },
+  { name: 'Desh Deepak', role: 'Head of Operations', image: 'c:\\Users\\kisla\\Downloads\\deepak.jpeg' },
+  { name: 'Shivaji Singh', role: 'Lead Developer', image: 'c:\\Users\\kisla\\Downloads\\shivaji.jpeg' },
+  { name: 'Kislay Sahu', role: 'Customer Success', image: 'c:\\Users\\kisla\\Downloads\\kislay.jpeg' },
 ]
 
 const milestones = [
