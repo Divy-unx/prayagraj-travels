@@ -138,8 +138,8 @@ export default function AboutPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             {TEAM.map(member => (
-              <div key={member.name} className="bg-white rounded-2xl shadow-card p-6 text-center border border-slate-100 hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
-                <div className="mx-auto mb-4 h-24 w-24 rounded-full border-4 border-primary-50 bg-slate-100 overflow-hidden">
+              <div key={member.name} className="bg-white rounded-2xl shadow-card p-4 text-center border border-black-200 hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
+                <div className="mx-auto mb-4 h-36 w-36 rounded border-4 border-primary-10 bg-slate-100 overflow-hidden">
                   <img src={member.image} alt={member.name} className="h-full w-full object-cover" />
                 </div>
                 <h3 className="font-bold text-slate-900 text-lg">{member.name}</h3>
