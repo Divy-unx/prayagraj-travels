@@ -140,7 +140,7 @@ export default function AboutPage() {
             {TEAM.map(member => (
               <div key={member.name} className="bg-white rounded-2xl shadow-card p-4 text-center border border-black-200 hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
                 <div className="mx-auto mb-4 h-36 w-36 rounded border-4 border-primary-10 bg-slate-100 overflow-hidden">
-                  <img src={member.image} alt={member.name} className="h-full w-full object-contain object-top" />
+                  <img src={member.image} alt={member.name} className="h-full w-full object-cover object-top" />
                 </div>
                 <h3 className="font-bold text-slate-900 text-lg">{member.name}</h3>
                 <p className="text-sm text-slate-500 font-medium mt-1">{member.role}</p>
