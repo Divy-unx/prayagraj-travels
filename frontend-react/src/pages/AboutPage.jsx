@@ -3,31 +3,26 @@ import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import { STATS } from '../utils/constants'
 
-import divyanshuImg from '../assets/team/divyanshu.jpeg'
-import deepakImg from '../assets/team/deepak.jpeg'
-import shivajiImg from '../assets/team/shivaji.jpeg'
-import kislayImg from '../assets/team/kislay.jpeg'
-
 const TEAM = [
   {
     name: 'Divyanshu Mishra',
     role: 'Founder & CEO',
-    image: divyanshuImg
+    image: 'https://ik.imagekit.io/zvwwmpviq/Prayag%20travels/Dev.jpeg'
   },
   {
     name: 'Desh Deepak',
     role: 'Head of Operations',
-    image: deepakImg
+    image: 'https://ik.imagekit.io/zvwwmpviq/Prayag%20travels/desh.jpeg'
   },
   {
     name: 'Shivaji Singh',
     role: 'Lead Developer',
-    image: shivajiImg
+    image: 'https://ik.imagekit.io/zvwwmpviq/Prayag%20travels/shivaji.jpeg'
   },
   {
     name: 'Kislay Sahu',
     role: 'Customer Success',
-    image: kislayImg
+    image: 'https://ik.imagekit.io/zvwwmpviq/Prayag%20travels/kislay.jpeg'
   },
 ]
 
@@ -42,17 +37,31 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-hero-grad py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
+      <section className="relative overflow-hidden bg-hero-grad py-20 sm:py-24">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -bottom-28 -left-28 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
+        </div>
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+          <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 text-xs font-bold uppercase tracking-[0.25em] px-4 py-2 rounded-full mb-6">
             🚌 About Us
           </span>
-          <h1 className="text-4xl sm:text-5xl font-black mb-5 leading-tight">
-            Reinventing City Travel<br />in Prayagraj
+          <h1 className="text-4xl sm:text-6xl font-black mb-5 leading-[1.05]">
+            Reinventing City Travel
+            <br />
+            in Prayagraj
           </h1>
-          <p className="text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
             We're on a mission to make intra-city bus travel in Prayagraj as seamless, reliable, and enjoyable as possible — for every passenger, every single day.
           </p>
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link to="/" className="w-full sm:w-auto">
+              <Button variant="primary" size="lg">Book a Bus Now</Button>
+            </Link>
+            <Link to="/contact" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg">Contact Us</Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -61,10 +70,10 @@ export default function AboutPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {STATS.map(s => (
-              <div key={s.label} className="text-center">
-                <p className="text-4xl mb-1">{s.icon}</p>
-                <p className="text-3xl font-black text-slate-900">{s.value}</p>
-                <p className="text-sm text-slate-500 mt-1 font-medium">{s.label}</p>
+              <div key={s.label} className="text-center bg-slate-50 rounded-2xl border border-slate-100 py-6 shadow-card">
+                <p className="text-4xl mb-2">{s.icon}</p>
+                <p className="text-3xl font-black text-slate-900 tracking-tight">{s.value}</p>
+                <p className="text-xs uppercase tracking-widest text-slate-500 mt-2 font-semibold">{s.label}</p>
               </div>
             ))}
           </div>
@@ -74,10 +83,10 @@ export default function AboutPage() {
       {/* Mission */}
       <section className="py-16 bg-slate-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-10 items-center">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <span className="section-tag">🎯 Our Mission</span>
-              <h2 className="section-title mt-1">Making Prayagraj Move Smarter</h2>
+              <h2 className="section-title mt-2">Making Prayagraj Move Smarter</h2>
               <p className="text-slate-600 mt-4 leading-relaxed">
                 Public transport is the backbone of any city. Yet booking a city bus in Prayagraj was complicated, unreliable, and frustrating. We built PrayagTravels to change that.
               </p>
@@ -92,7 +101,7 @@ export default function AboutPage() {
                   'Dedicated support 7 days a week',
                 ].map(p => (
                   <div key={p} className="flex items-start gap-3">
-                    <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-emerald-600 text-xs">✓</span>
                     </div>
                     <p className="text-slate-700 text-sm font-medium">{p}</p>
@@ -107,7 +116,7 @@ export default function AboutPage() {
                 { icon: Heart, color: 'bg-rose-50 text-rose-600', title: 'Passenger-First', desc: 'Every decision we make starts with the question: does this help our passengers?' },
                 { icon: Award, color: 'bg-emerald-50 text-emerald-600', title: 'Certified Quality', desc: 'ISO-certified operations. Award-winning platform design.' },
               ].map(c => (
-                <div key={c.title} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-card">
+                <div key={c.title} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-card hover:shadow-card-hover transition-shadow duration-300">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${c.color}`}>
                     <c.icon className="w-5 h-5" />
                   </div>
@@ -129,8 +138,10 @@ export default function AboutPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             {TEAM.map(member => (
-              <div key={member.name} className="bg-white rounded-2xl shadow-card p-6 text-center border border-slate-100 hover:shadow-card-hover transition-shadow duration-300">
-                <img src={member.image} alt={member.name} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-primary-50 object-cover" />
+              <div key={member.name} className="bg-white rounded-2xl shadow-card p-6 text-center border border-slate-100 hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
+                <div className="mx-auto mb-4 h-24 w-24 rounded-full border-4 border-primary-50 bg-slate-100 overflow-hidden">
+                  <img src={member.image} alt={member.name} className="h-full w-full object-cover" />
+                </div>
                 <h3 className="font-bold text-slate-900 text-lg">{member.name}</h3>
                 <p className="text-sm text-slate-500 font-medium mt-1">{member.role}</p>
               </div>
@@ -151,7 +162,7 @@ export default function AboutPage() {
             {milestones.map((m, i) => (
               <div key={i} className="relative mb-8 last:mb-0">
                 <div className="absolute -left-5 top-1 w-4 h-4 rounded-full bg-primary-600 border-2 border-white shadow" />
-                <div className="bg-slate-50 rounded-xl p-4">
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                   <span className="text-xs font-black text-primary-600 uppercase tracking-wider">{m.year}</span>
                   <p className="text-slate-800 font-semibold text-sm mt-1">{m.event}</p>
                 </div>
@@ -163,12 +174,14 @@ export default function AboutPage() {
 
       {/* CTA */}
       <section className="py-16 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold text-slate-900 mb-4">Ready to Travel Smarter?</h2>
-          <p className="text-slate-500 mb-7">Join 50,000+ daily passengers who trust PrayagTravels for their city commute.</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/"><Button variant="primary" size="lg">Book a Bus Now</Button></Link>
-            <Link to="/contact"><Button variant="outline" size="lg">Contact Us</Button></Link>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-slate-100 bg-slate-50 px-6 py-10 sm:px-10 text-center shadow-card">
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-4">Ready to Travel Smarter?</h2>
+            <p className="text-slate-500 mb-7">Join 50,000+ daily passengers who trust PrayagTravels for their city commute.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to="/"><Button variant="primary" size="lg">Book a Bus Now</Button></Link>
+              <Link to="/contact"><Button variant="outline" size="lg">Contact Us</Button></Link>
+            </div>
           </div>
         </div>
       </section>
