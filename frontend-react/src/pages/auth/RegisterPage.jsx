@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { User, Mail, Lock, Phone, Eye, EyeOff, ArrowRight, Bus, Check } from 'lucide-react'
 import { GoogleLogin } from '@react-oauth/google'
@@ -55,12 +55,17 @@ export default function RegisterPage() {
     setStep(2)
   }
 
+  const coldStartTimerRef = useRef(null)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!agreed) return toast.error('Please accept the terms to continue')
     if (form.password !== form.confirm) return toast.error('Passwords do not match')
     if (form.password.length < 8) return toast.error('Password must be at least 8 characters')
     setLoading(true)
+    coldStartTimerRef.current = setTimeout(() => {
+      toast('Server is waking up, please wait...', { icon: '⏳', id: 'cold-start', duration: 50000 })
+    }, 8000)
     try {
       await register({
         name: form.name.trim(),
@@ -74,6 +79,8 @@ export default function RegisterPage() {
       toast.error(err.message || 'Registration failed')
       setStep(1)
     } finally {
+      clearTimeout(coldStartTimerRef.current)
+      toast.dismiss('cold-start')
       setLoading(false)
     }
   }

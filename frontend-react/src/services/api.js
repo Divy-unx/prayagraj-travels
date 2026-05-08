@@ -18,10 +18,11 @@ const AUTH_ENDPOINT = `${API_BASE_URL}/api/auth`
 const tokenKey = 'pt_token'
 
 // ── Timeout configuration (ms) ──────────────────────────────────────────────
+// Auth timeout is 60s because Render free tier cold-starts take 30-60 seconds.
 const TIMEOUTS = {
   default: 20000,
-  search: 30000,   // Search may hit cold start
-  auth: 15000,
+  search: 30000,
+  auth: 60000,
 }
 
 // ── Retry configuration ─────────────────────────────────────────────────────
@@ -126,7 +127,10 @@ api.interceptors.response.use(res => res, handleResponseError)
 auth.interceptors.response.use(
   res => res,
   err => {
-    const msg = err.response?.data?.error || err.message || 'Something went wrong'
+    let msg = err.response?.data?.error || err.message || 'Something went wrong'
+    if (err.code === 'ECONNABORTED' || msg.includes('timeout')) {
+      msg = 'Server is starting up, please try again in a moment.'
+    }
     logger.error('Auth', 'Auth request failed', { message: msg })
     return Promise.reject(new Error(msg))
   }

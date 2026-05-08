@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Bus } from 'lucide-react'
 import { GoogleLogin } from '@react-oauth/google'
@@ -20,10 +20,15 @@ export default function LoginPage() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const coldStartTimerRef = useRef(null)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.email || !form.password) return toast.error('Please fill in all fields')
     setLoading(true)
+    coldStartTimerRef.current = setTimeout(() => {
+      toast('Server is waking up, please wait...', { icon: '⏳', id: 'cold-start', duration: 50000 })
+    }, 8000)
     try {
       const user = await login({ email: form.email.trim().toLowerCase(), password: form.password })
       if (user?.isEmailVerified === false || user?.is_email_verified === false) {
@@ -36,6 +41,8 @@ export default function LoginPage() {
     } catch (err) {
       toast.error(err.message || 'Login failed')
     } finally {
+      clearTimeout(coldStartTimerRef.current)
+      toast.dismiss('cold-start')
       setLoading(false)
     }
   }
