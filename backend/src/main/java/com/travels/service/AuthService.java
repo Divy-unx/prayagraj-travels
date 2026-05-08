@@ -71,6 +71,9 @@ public class AuthService {
     @Value("${app.google.client-id:}")
     private String googleClientId;
 
+    @Value("${app.google.oauth-tokeninfo-url:https://oauth2.googleapis.com/tokeninfo}")
+    private String googleOAuthTokenInfoUrl;
+
     @Value("${app.admin.emails:admin@prayagraj-travels.com}")
     private String adminEmails;
 
@@ -385,7 +388,7 @@ public class AuthService {
         }
 
         // Verify with Google tokeninfo
-        String url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + credential;
+        String url = googleOAuthTokenInfoUrl + "?id_token=" + credential;
         Map<String, Object> googleClaims;
         try {
             RestTemplate rest = new RestTemplate();
