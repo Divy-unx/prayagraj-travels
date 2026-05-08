@@ -2,11 +2,16 @@ import axios from 'axios'
 import logger from '../utils/logger'
 
 // ── API Configuration ────────────────────────────────────────────────────────
-// IMPORTANT: Set VITE_API_BASE_URL in your .env files:
-//   .env.development: VITE_API_BASE_URL=http://localhost:8080
-//   .env.production: VITE_API_BASE_URL=https://prayagraj-travels-2.onrender.com
+// VITE_API_BASE_URL must be set in .env (dev) or as a build arg (Docker/CI).
+// Missing it causes a hard error at startup rather than silently hitting a wrong server.
+// Dev:  VITE_API_BASE_URL=http://localhost:8081
+// Prod: VITE_API_BASE_URL=https://your-backend.onrender.com
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://prayagraj-travels-2.onrender.com'
+if (!import.meta.env.VITE_API_BASE_URL) {
+  throw new Error('[api.js] VITE_API_BASE_URL is not set. Add it to .env or your deployment environment.')
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 const API_ENDPOINT = `${API_BASE_URL}/api/travels`
 const AUTH_ENDPOINT = `${API_BASE_URL}/api/auth`
 
@@ -49,6 +54,7 @@ function setToken(token) {
 const api = axios.create({
   baseURL: API_ENDPOINT,
   timeout: TIMEOUTS.default,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -58,6 +64,7 @@ const api = axios.create({
 const auth = axios.create({
   baseURL: AUTH_ENDPOINT,
   timeout: TIMEOUTS.auth,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -185,6 +192,11 @@ export const authService = {
     if (data?.token) setToken(data.token)
     return data
   },
+  googleSignIn: async credential => {
+    const { data } = await auth.post('/google', { credential })
+    if (data?.token) setToken(data.token)
+    return data
+  },
   me: async () => {
     const { data } = await auth.get('/me')
     return data
@@ -193,7 +205,26 @@ export const authService = {
     const { data } = await auth.put('/profile', payload)
     return data
   },
-  logout: () => setToken(null),
+  verifyEmail: async otp => {
+    const { data } = await auth.post('/verify-email', { otp })
+    return data
+  },
+  resendVerification: async () => {
+    const { data } = await auth.post('/resend-verification')
+    return data
+  },
+  forgotPassword: async email => {
+    const { data } = await auth.post('/forgot-password', { email })
+    return data
+  },
+  resetPassword: async payload => {
+    const { data } = await auth.post('/reset-password', payload)
+    return data
+  },
+  logout: async () => {
+    try { await auth.post('/logout') } catch { /* ignore */ }
+    setToken(null)
+  },
   getToken,
 }
 

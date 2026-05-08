@@ -3,10 +3,9 @@ services:
   mysql:
     image: mysql:8.0
     restart: unless-stopped
-    env_file: ./backend/.env
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: prayagraj_bus
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
       - "3306:3306"
     volumes:
@@ -33,8 +32,11 @@ services:
     restart: unless-stopped
     env_file: ./backend/.env
     environment:
+      # Override .env values for Docker networking
       DB_HOST: mysql
       REDIS_HOST: redis
+      REDIS_USERNAME: ""
+      REDIS_PASSWORD: ""
     ports:
       - "8081:8081"
     depends_on:
@@ -47,7 +49,8 @@ services:
     build:
       context: ./frontend-react
       args:
-        VITE_API_BASE_URL: http://localhost:8081
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     restart: unless-stopped
     ports:
       - "3000:80"

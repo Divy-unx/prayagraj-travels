@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { authService, setAuthToken } from '../services/api'
 
 const AuthContext = createContext()
@@ -10,51 +10,84 @@ export function AuthProvider({ children }) {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null }
     catch { return null }
   })
+  const [loading, setLoading] = useState(true)
 
+  // Persist user to localStorage whenever it changes
   useEffect(() => {
-    const token = authService.getToken()
-    if (!token) return
+    if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
+    else localStorage.removeItem(STORAGE_KEY)
+  }, [user])
+
+  // On mount: validate session via /me (works for both cookie and Bearer token)
+  useEffect(() => {
     authService.me()
       .then(res => {
-        const nextUser = res?.user || null
-        if (nextUser) {
-          setUser(nextUser)
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
-        }
+        const nextUser = res?.user || res || null
+        setUser(nextUser)
       })
       .catch(() => {
-        logout()
+        setUser(null)
+        setAuthToken(null)
       })
+      .finally(() => setLoading(false))
   }, [])
 
-  const login = async (userData) => {
-    const payload = 'password' in userData
-      ? await authService.login({ email: userData.email, password: userData.password })
-      : { user: userData, token: userData.token }
-
-    const nextUser = payload.user || userData
-    if (payload.token) setAuthToken(payload.token)
+  const login = useCallback(async (credentials) => {
+    const data = await authService.login(credentials)
+    const nextUser = data?.user || null
+    if (data?.token) setAuthToken(data.token)
     setUser(nextUser)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
     return nextUser
-  }
+  }, [])
 
-  const logout = () => {
+  const register = useCallback(async (credentials) => {
+    const data = await authService.register(credentials)
+    const nextUser = data?.user || null
+    if (data?.token) setAuthToken(data.token)
+    setUser(nextUser)
+    return nextUser
+  }, [])
+
+  const googleLogin = useCallback(async (credential) => {
+    const data = await authService.googleSignIn(credential)
+    const nextUser = data?.user || null
+    if (data?.token) setAuthToken(data.token)
+    setUser(nextUser)
+    return nextUser
+  }, [])
+
+  const logout = useCallback(async () => {
+    await authService.logout()
     setUser(null)
-    setAuthToken(null)
-    localStorage.removeItem(STORAGE_KEY)
-  }
+  }, [])
 
-  const updateProfile = async (updates) => {
-    const payload = await authService.updateProfile(updates)
-    const nextUser = payload.user || { ...user, ...updates }
+  const updateProfile = useCallback(async (updates) => {
+    const data = await authService.updateProfile(updates)
+    const nextUser = data?.user || { ...user, ...updates }
     setUser(nextUser)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
     return nextUser
-  }
+  }, [user])
+
+  const markEmailVerified = useCallback(() => {
+    setUser(prev => prev ? { ...prev, isEmailVerified: true } : prev)
+  }, [])
+
+  const isLoggedIn = !!user
+  const isEmailVerified = user?.isEmailVerified === true || user?.is_email_verified === true
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateProfile, isLoggedIn: !!user }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isLoggedIn,
+      isEmailVerified,
+      login,
+      register,
+      googleLogin,
+      logout,
+      updateProfile,
+      markEmailVerified,
+    }}>
       {children}
     </AuthContext.Provider>
   )

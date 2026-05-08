@@ -1,7 +1,17 @@
-# ── Environment secrets (never commit — commit .env.example instead) ──────────
+# ── Environment secrets ───────────────────────────────────────────────────────
+# Block all .env files that contain real credentials.
+# .env.example files are ALLOWED — they are safe templates with placeholder values.
 .env
-.env.example
+.env.local
 .env.*.local
+backend/.env
+frontend-react/.env
+frontend-react/.env.production
+
+# Allow example templates (no real secrets)
+!.env.example
+!backend/.env.example
+!frontend-react/.env.example
 
 # ── Java / Maven ──────────────────────────────────────────────────────────────
 backend/target/

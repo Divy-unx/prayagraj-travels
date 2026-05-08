@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,11 +25,6 @@ import com.travels.service.TravelsService;
 
 @RestController
 @RequestMapping("/api/travels")
-@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173",
-        "https://prayagraj-travels.vercel.app" }, methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
-                RequestMethod.DELETE, RequestMethod.OPTIONS }, allowedHeaders = { "Content-Type", "Accept",
-                        "Authorization", "X-Requested-With" }, exposedHeaders = { "Content-Type",
-                                "X-Total-Count" }, allowCredentials = "false", maxAge = 3600)
 public class TravelsController {
 
     private static final Logger log = LoggerFactory.getLogger(TravelsController.class);
@@ -135,12 +128,7 @@ public class TravelsController {
         }
     }
 
-    // Seat Hold
     // POST /api/travels/seats/hold
-    Body:
-
-    { busId, seatNumber, travelDate, userId }
-
     @PostMapping("/seats/hold")
     public ResponseEntity<Map<String, Object>> holdSeat(@RequestBody SeatHoldRequest req) {
         Map<String, Object> result = travelsService.holdSeat(req);

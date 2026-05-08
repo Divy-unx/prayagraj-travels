@@ -2,8 +2,6 @@
 -- Prayagraj Travels – Idempotent Schema
 -- Safe to run on every startup: CREATE IF NOT EXISTS + INSERT IGNORE
 -- ============================================================
-CREATE DATABASE IF NOT EXISTS railway;
-USE railway;
 
 CREATE TABLE IF NOT EXISTS buses (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -12,20 +10,26 @@ CREATE TABLE IF NOT EXISTS buses (
     destination VARCHAR(100),
     capacity INT,
     fare DOUBLE,
-    UNIQUE KEY uq_bus_name (name)
+    UNIQUE KEY uq_bus_name (name),
+    INDEX idx_buses_source_destination (source, destination)
 );
 
-CREATE INDEX IF NOT EXISTS idx_buses_source_destination ON buses (source, destination);
-
 CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    phone VARCHAR(20) DEFAULT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'USER',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    id               BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    name             VARCHAR(100) NOT NULL,
+    email            VARCHAR(150) NOT NULL UNIQUE,
+    phone            VARCHAR(20)  DEFAULT NULL,
+    password_hash    VARCHAR(255) NOT NULL DEFAULT '',
+    role             VARCHAR(20)  NOT NULL DEFAULT 'USER',
+    auth_provider    ENUM('LOCAL','GOOGLE') NOT NULL DEFAULT 'LOCAL',
+    google_id        VARCHAR(100) DEFAULT NULL,
+    avatar_url       VARCHAR(500) DEFAULT NULL,
+    is_email_verified TINYINT(1)  NOT NULL DEFAULT 0,
+    is_phone_verified TINYINT(1)  NOT NULL DEFAULT 0,
+    is_active        TINYINT(1)   NOT NULL DEFAULT 1,
+    last_login_at    TIMESTAMP    NULL DEFAULT NULL,
+    created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS bookings (
@@ -234,3 +238,31 @@ INSERT IGNORE INTO buses (name, source, destination, capacity, fare) VALUES
 
 ('City Bus 99','Phaphamau','Jhunsi',40,21),
 ('City Bus 100','Phaphamau','Jhunsi',40,23);
+
+-- ============================================================
+-- Auth Extension Tables
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    otp CHAR(6) DEFAULT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_evt_user (user_id),
+    INDEX idx_evt_token (token)
+);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    otp CHAR(6) DEFAULT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_prt_user (user_id),
+    INDEX idx_prt_token (token)
+);

@@ -15,6 +15,13 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Stateless HS256 JWT implementation.
+ *
+ * <p>The {@code generateToken} method uses {@code expirationSeconds} derived from
+ * {@code app.jwt.access-expiry-minutes} (default 15 min).  Refresh tokens are
+ * long-lived opaque strings stored in Redis — they are never passed through this class.
+ */
 @Service
 public class JwtService {
 
@@ -24,14 +31,19 @@ public class JwtService {
     private final byte[] secretBytes;
     private final long expirationSeconds;
 
-    public JwtService(ObjectMapper objectMapper,
-                      @Value("${app.jwt.secret}") String secret,
-                      @Value("${app.jwt.expiration-minutes}") long expirationMinutes) {
-        this.objectMapper = objectMapper;
-        this.secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+    public JwtService(
+            ObjectMapper objectMapper,
+            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.access-expiry-minutes:15}") long expirationMinutes) {
+        this.objectMapper      = objectMapper;
+        this.secretBytes       = secret.getBytes(StandardCharsets.UTF_8);
         this.expirationSeconds = expirationMinutes * 60L;
     }
 
+    /**
+     * Generate a signed JWT with the supplied claims.
+     * Automatically adds {@code iat} and {@code exp} fields.
+     */
     public String generateToken(Map<String, Object> claims) {
         long now = Instant.now().getEpochSecond();
         Map<String, Object> payload = new HashMap<>(claims);
@@ -39,8 +51,8 @@ public class JwtService {
         payload.put("exp", now + expirationSeconds);
 
         try {
-            String header = base64Url(objectMapper.writeValueAsBytes(Map.of("alg", "HS256", "typ", "JWT")));
-            String body = base64Url(objectMapper.writeValueAsBytes(payload));
+            String header    = base64Url(objectMapper.writeValueAsBytes(Map.of("alg", "HS256", "typ", "JWT")));
+            String body      = base64Url(objectMapper.writeValueAsBytes(payload));
             String signature = sign(header + "." + body);
             return header + "." + body + "." + signature;
         } catch (Exception e) {
@@ -48,6 +60,11 @@ public class JwtService {
         }
     }
 
+    /**
+     * Verify a JWT's signature and expiry, then return the decoded claims.
+     *
+     * @throws IllegalArgumentException on invalid format, bad signature, or expiry
+     */
     public Map<String, Object> verifyAndParse(String token) {
         try {
             String[] parts = token.split("\\.");
@@ -59,7 +76,10 @@ public class JwtService {
                 throw new IllegalArgumentException("Invalid token signature");
             }
 
-            Map<String, Object> payload = objectMapper.readValue(Base64.getUrlDecoder().decode(parts[1]), new TypeReference<>() {});
+            Map<String, Object> payload = objectMapper.readValue(
+                    Base64.getUrlDecoder().decode(parts[1]),
+                    new TypeReference<>() {});
+
             Number exp = (Number) payload.get("exp");
             if (exp == null || Instant.now().getEpochSecond() > exp.longValue()) {
                 throw new IllegalArgumentException("Token expired");
