@@ -33,10 +33,10 @@ services:
     env_file: ./backend/.env
     environment:
       # Override .env values for Docker networking
-      DB_HOST: mysql
-      REDIS_HOST: redis
-      REDIS_USERNAME: ""
-      REDIS_PASSWORD: ""
+      DB_HOST: ${DB_HOST}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_USERNAME: ${REDIS_USERNAME}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "8081:8081"
     depends_on:

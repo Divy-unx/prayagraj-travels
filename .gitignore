@@ -3,6 +3,7 @@
 # .env.example files are ALLOWED — they are safe templates with placeholder values.
 .env
 .env.local
+.env.example
 .env.*.local
 backend/.env
 frontend-react/.env
