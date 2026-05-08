@@ -184,17 +184,17 @@ async function requestWithRetry(fn, { retries = RETRY_CONFIG.maxRetries, signal 
 export const authService = {
   register: async payload => {
     const { data } = await auth.post('/register', payload)
-    if (data?.token) setToken(data.token)
+    if (data?.accessToken) setToken(data.accessToken)
     return data
   },
   login: async payload => {
     const { data } = await auth.post('/login', payload)
-    if (data?.token) setToken(data.token)
+    if (data?.accessToken) setToken(data.accessToken)
     return data
   },
   googleSignIn: async credential => {
     const { data } = await auth.post('/google', { credential })
-    if (data?.token) setToken(data.token)
+    if (data?.accessToken) setToken(data.accessToken)
     return data
   },
   me: async () => {

@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (credentials) => {
     const data = await authService.login(credentials)
     const nextUser = data?.user || null
-    if (data?.token) setAuthToken(data.token)
+    if (data?.accessToken) setAuthToken(data.accessToken)
     setUser(nextUser)
     return nextUser
   }, [])
@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (credentials) => {
     const data = await authService.register(credentials)
     const nextUser = data?.user || null
-    if (data?.token) setAuthToken(data.token)
+    if (data?.accessToken) setAuthToken(data.accessToken)
     setUser(nextUser)
     return nextUser
   }, [])
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
   const googleLogin = useCallback(async (credential) => {
     const data = await authService.googleSignIn(credential)
     const nextUser = data?.user || null
-    if (data?.token) setAuthToken(data.token)
+    if (data?.accessToken) setAuthToken(data.accessToken)
     setUser(nextUser)
     return nextUser
   }, [])
