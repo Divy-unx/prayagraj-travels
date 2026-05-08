@@ -43,13 +43,14 @@ public class AuthController {
                                       HttpServletResponse res) {
         try {
             Map<String, Object> result = authService.register(request);
-            setAuthCookies(res,
-                    (String) result.get("accessToken"),
-                    (String) result.get("refreshToken"));
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                    "user", result.get("user"),
-                    "message", "Registration successful. Please verify your email."
-            ));
+            String accessToken  = (String) result.get("accessToken");
+            String refreshToken = (String) result.get("refreshToken");
+            setAuthCookies(res, accessToken, refreshToken);
+            java.util.Map<String, Object> body = new java.util.HashMap<>();
+            body.put("user", result.get("user"));
+            body.put("accessToken", accessToken);
+            body.put("message", "Registration successful. Please verify your email.");
+            return ResponseEntity.status(HttpStatus.CREATED).body(body);
         } catch (AuthService.DuplicateEmailException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
         } catch (AuthService.DisposableEmailException e) {
@@ -72,10 +73,10 @@ public class AuthController {
         try {
             String ip = extractClientIp(req);
             Map<String, Object> result = authService.login(request, ip);
-            setAuthCookies(res,
-                    (String) result.get("accessToken"),
-                    (String) result.get("refreshToken"));
-            return ResponseEntity.ok(Map.of("user", result.get("user")));
+            String accessToken  = (String) result.get("accessToken");
+            String refreshToken = (String) result.get("refreshToken");
+            setAuthCookies(res, accessToken, refreshToken);
+            return ResponseEntity.ok(Map.of("user", result.get("user"), "accessToken", accessToken));
         } catch (AuthService.RateLimitException e) {
             return ResponseEntity.status(429).body(Map.of("error", e.getMessage()));
         } catch (AuthService.AuthException e) {
@@ -105,12 +106,12 @@ public class AuthController {
         try {
             long userId = currentUserId();
             Map<String, Object> result = authService.verifyEmail(userId, request.getOtp());
-            // Re-issue tokens so that emailVerified=true is embedded in the new access token
-            setAuthCookies(res,
-                    (String) result.get("accessToken"),
-                    (String) result.get("refreshToken"));
+            String accessToken  = (String) result.get("accessToken");
+            String refreshToken = (String) result.get("refreshToken");
+            setAuthCookies(res, accessToken, refreshToken);
             return ResponseEntity.ok(Map.of(
                     "user", result.get("user"),
+                    "accessToken", accessToken,
                     "message", "Email verified successfully"
             ));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -172,11 +173,12 @@ public class AuthController {
         try {
             Map<String, Object> result = authService.resetPassword(
                     request.getEmail(), request.getOtp(), request.getNewPassword());
-            setAuthCookies(res,
-                    (String) result.get("accessToken"),
-                    (String) result.get("refreshToken"));
+            String accessToken  = (String) result.get("accessToken");
+            String refreshToken = (String) result.get("refreshToken");
+            setAuthCookies(res, accessToken, refreshToken);
             return ResponseEntity.ok(Map.of(
                     "user", result.get("user"),
+                    "accessToken", accessToken,
                     "message", "Password reset successfully"
             ));
         } catch (IllegalArgumentException e) {
@@ -197,10 +199,10 @@ public class AuthController {
                                         HttpServletResponse res) {
         try {
             Map<String, Object> result = authService.googleAuth(request.getCredential());
-            setAuthCookies(res,
-                    (String) result.get("accessToken"),
-                    (String) result.get("refreshToken"));
-            return ResponseEntity.ok(Map.of("user", result.get("user")));
+            String accessToken  = (String) result.get("accessToken");
+            String refreshToken = (String) result.get("refreshToken");
+            setAuthCookies(res, accessToken, refreshToken);
+            return ResponseEntity.ok(Map.of("user", result.get("user"), "accessToken", accessToken));
         } catch (AuthService.AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {

@@ -18,11 +18,13 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem(STORAGE_KEY)
   }, [user])
 
-  // On mount: validate session via /me (works for both cookie and Bearer token)
+  // On mount: validate session via /me (works via httpOnly cookie or Bearer token)
   useEffect(() => {
     authService.me()
       .then(res => {
         const nextUser = res?.user || res || null
+        // Re-hydrate token if returned (e.g. after page refresh with valid cookie)
+        if (res?.accessToken) setAuthToken(res.accessToken)
         setUser(nextUser)
       })
       .catch(() => {
