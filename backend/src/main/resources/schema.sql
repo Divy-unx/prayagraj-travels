@@ -268,6 +268,30 @@ UPDATE users SET is_active = 1 WHERE is_active = 0;
 ALTER TABLE cancellation_logs ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 -- ============================================================
+-- Ghost Booking Cleanup
+-- Run this ONCE manually on production after deploying the
+-- schema-migration fix (the fix that added booked_at etc.).
+--
+-- Context: before the fix, INSERT into bookings succeeded but
+-- findBookingById() threw a 500 (missing columns). Users saw
+-- an error but their seat was marked CONFIRMED in the DB.
+-- After the fix, those ghost rows block seats with a 409.
+--
+-- Replace '<CUTOFF_TIMESTAMP>' with the first deploy timestamp
+-- of the fixed version (e.g. '2026-05-17 12:00:00').
+-- Only bookings confirmed BEFORE that timestamp with no
+-- matching user-visible confirmation can be ghosts.
+--
+-- UPDATE bookings
+-- SET status = 'CANCELLED',
+--     cancelled_at = NOW(),
+--     refund_status = 'NONE',
+--     refund_amount = 0
+-- WHERE status = 'CONFIRMED'
+--   AND booked_at < '<CUTOFF_TIMESTAMP>';
+-- ============================================================
+
+-- ============================================================
 -- Auth Extension Tables
 -- ============================================================
 

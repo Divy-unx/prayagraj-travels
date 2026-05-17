@@ -156,7 +156,20 @@ public class TravelsController {
     public ResponseEntity<Map<String, Object>> confirmBooking(@RequestBody BookingRequest req) {
         Map<String, Object> result = travelsService.confirmBooking(req);
         boolean success = Boolean.TRUE.equals(result.get("success"));
-        return ResponseEntity.status(success ? HttpStatus.CREATED : HttpStatus.CONFLICT).body(result);
+
+        if (success) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        }
+
+        String errorCode = String.valueOf(result.getOrDefault("errorCode", ""));
+        HttpStatus status = switch (errorCode) {
+            case "HOLD_EXPIRED"   -> HttpStatus.UNPROCESSABLE_ENTITY; // 422 – hold timed out, re-select seat
+            case "NOT_YOUR_HOLD"  -> HttpStatus.FORBIDDEN;             // 403 – different user owns the hold
+            case "ALREADY_BOOKED" -> HttpStatus.CONFLICT;              // 409 – seat already confirmed in DB
+            default               -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+
+        return ResponseEntity.status(status).body(result);
     }
 
     @GetMapping("/bookings")
