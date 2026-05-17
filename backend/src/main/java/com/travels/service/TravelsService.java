@@ -316,20 +316,23 @@ public class TravelsService {
 
         String redisKey = redisHoldKey(req.getBusId(), req.getSeatNumber(), req.getTravelDate());
 
-        // 1. Check Redis hold
-        Object holder = redis.opsForValue().get(redisKey);
+        // 1. Atomically claim the hold: read + delete in a single operation.
+        //    Only ONE concurrent request will receive a non-null value; subsequent
+        //    identical requests get null → HOLD_EXPIRED, preventing double-booking.
+        Object holder = redis.opsForValue().getAndDelete(redisKey);
         if (holder == null) {
             return errorResponse("HOLD_EXPIRED",
                     "Your seat hold has expired. Please select the seat again.");
         }
         if (!req.getUserId().equals(holder.toString())) {
+            // Not our hold — restore it so the actual holder can still confirm.
+            redis.opsForValue().set(redisKey, holder.toString(), HOLD_TTL_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
             return errorResponse("NOT_YOUR_HOLD",
                     "Seat is held by a different user.");
         }
 
-        // 2. Double-check DB (race condition guard)
+        // 2. Double-check DB (guard against stale holds surviving a prior crash)
         if (repo.isSeatBooked(req.getBusId(), req.getSeatNumber(), req.getTravelDate())) {
-            redis.delete(redisKey);
             return errorResponse("ALREADY_BOOKED",
                     "Seat was just confirmed by another booking. Please choose another seat.");
         }
@@ -338,20 +341,22 @@ public class TravelsService {
         Map<String, Object> bus = repo.findBusById(req.getBusId());
         double fare = bus != null ? ((Number) bus.get("fare")).doubleValue() : 0.0;
 
-        // 4. Insert booking
+        // 4. Insert booking (repository uses WHERE NOT EXISTS for DB-level safety)
         long bookingId = repo.confirmBooking(
                 req.getBusId(), req.getSeatNumber(), req.getTravelDate(),
                 req.getUserId(), req.getPassengerName(),
                 req.getPassengerPhone(), fare);
 
-        // 5. Release Redis hold
-        redis.delete(redisKey);
+        if (bookingId <= 0) {
+            return errorResponse("ALREADY_BOOKED",
+                    "Seat was already confirmed. Please choose another seat.");
+        }
 
-        // 6. Return booking details
+        // 5. Return booking details
         Map<String, Object> booking = repo.findBookingById(bookingId);
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
-        res.put("message", "🎉 Booking confirmed!");
+        res.put("message", "Booking confirmed!");
         res.put("booking", booking);
         return res;
     }

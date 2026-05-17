@@ -240,6 +240,34 @@ INSERT IGNORE INTO buses (name, source, destination, capacity, fare) VALUES
 ('City Bus 100','Phaphamau','Jhunsi',40,23);
 
 -- ============================================================
+-- Schema Migrations (idempotent: ADD COLUMN IF NOT EXISTS)
+-- Handles production DBs created before these columns were added.
+-- MySQL 8.0+ required for IF NOT EXISTS on ALTER TABLE.
+-- ============================================================
+
+-- bookings: columns added after initial production deployment
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booked_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelled_at   TIMESTAMP    NULL     DEFAULT NULL;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_status  ENUM('NONE','PENDING','PROCESSED','FAILED') NOT NULL DEFAULT 'NONE';
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_amount  DOUBLE       DEFAULT 0;
+
+-- users: columns added after initial production deployment
+ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider     ENUM('LOCAL','GOOGLE') NOT NULL DEFAULT 'LOCAL';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id         VARCHAR(100) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url        VARCHAR(500) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_email_verified TINYINT(1)  NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_phone_verified TINYINT(1)  NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active         TINYINT(1)  NOT NULL DEFAULT 1;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at     TIMESTAMP   NULL DEFAULT NULL;
+
+-- Fix: if is_active column was added with DEFAULT 0 (wrong), activate existing users.
+-- Safe because no deactivation/ban feature exists in the codebase.
+UPDATE users SET is_active = 1 WHERE is_active = 0;
+
+-- cancellation_logs: ensure table has all expected columns
+ALTER TABLE cancellation_logs ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- ============================================================
 -- Auth Extension Tables
 -- ============================================================
 

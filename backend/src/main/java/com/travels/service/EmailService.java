@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,6 +34,7 @@ public class EmailService {
      * @param otp      6-digit OTP code
      * @param purpose  human-readable purpose string (e.g. "Email Verification")
      */
+    @Async("emailTaskExecutor")
     public void sendOtpEmail(String toEmail, String name, String otp, String purpose) {
         if (fromEmail == null || fromEmail.isBlank()) {
             log.warn("MAIL_USERNAME not configured — skipping OTP email to {}", toEmail);
@@ -46,6 +48,7 @@ public class EmailService {
     /**
      * Send a welcome email after successful email verification.
      */
+    @Async("emailTaskExecutor")
     public void sendWelcomeEmail(String toEmail, String name) {
         if (fromEmail == null || fromEmail.isBlank()) {
             log.warn("MAIL_USERNAME not configured — skipping welcome email to {}", toEmail);
@@ -59,6 +62,7 @@ public class EmailService {
     /**
      * Send a password reset OTP email.
      */
+    @Async("emailTaskExecutor")
     public void sendPasswordResetEmail(String toEmail, String name, String otp) {
         if (fromEmail == null || fromEmail.isBlank()) {
             log.warn("MAIL_USERNAME not configured — skipping password reset email to {}", toEmail);

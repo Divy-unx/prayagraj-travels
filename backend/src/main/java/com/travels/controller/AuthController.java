@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,10 @@ import java.util.Map;
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
+    /** true in production (HTTPS); false only for local HTTP dev. Set via SECURE_COOKIE env var. */
+    @Value("${SECURE_COOKIE:true}")
+    private boolean secureCookie;
 
     private final AuthService authService;
     private final UserRepository userRepository;
@@ -301,16 +306,16 @@ public class AuthController {
     private void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
                 .httpOnly(true)
-                .secure(false)         // set true when behind HTTPS
-                .sameSite("Lax")
+                .secure(secureCookie)
+                .sameSite(secureCookie ? "None" : "Lax")  // None required for cross-origin HTTPS
                 .path("/")
                 .maxAge(900)           // 15 minutes
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(secureCookie)
+                .sameSite(secureCookie ? "None" : "Lax")
                 .path("/api/auth/refresh")
                 .maxAge(604800)        // 7 days
                 .build();
@@ -323,14 +328,16 @@ public class AuthController {
     private void clearAuthCookies(HttpServletResponse response) {
         ResponseCookie accessCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .sameSite("Lax")
+                .secure(secureCookie)
+                .sameSite(secureCookie ? "None" : "Lax")
                 .path("/")
                 .maxAge(0)
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .sameSite("Lax")
+                .secure(secureCookie)
+                .sameSite(secureCookie ? "None" : "Lax")
                 .path("/api/auth/refresh")
                 .maxAge(0)
                 .build();

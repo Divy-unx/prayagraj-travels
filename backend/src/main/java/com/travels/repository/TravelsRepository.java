@@ -157,7 +157,10 @@ public class TravelsRepository {
     }
 
     /**
-     * Inserts a confirmed booking. Returns the generated booking_id.
+     * Inserts a confirmed booking only if no CONFIRMED booking already exists for
+     * the same seat on the same date (DB-level double-booking guard).
+     *
+     * @return generated booking_id, or -1 if the seat was already booked
      */
     public long confirmBooking(Long busId, String seatNumber, String travelDate,
                                String userId, String passengerName,
@@ -165,10 +168,15 @@ public class TravelsRepository {
         String sql = """
                 INSERT INTO bookings
                     (bus_id, seat_number, travel_date, user_id, passenger_name, passenger_phone, status, fare_paid)
-                VALUES (?, ?, ?, ?, ?, ?, 'CONFIRMED', ?)
+                SELECT ?, ?, ?, ?, ?, ?, 'CONFIRMED', ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM bookings
+                    WHERE bus_id = ? AND seat_number = ? AND travel_date = ? AND status = 'CONFIRMED'
+                )
                 """;
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(conn -> {
+        int rows = jdbc.update(conn -> {
             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, busId);
             ps.setString(2, seatNumber);
@@ -177,9 +185,17 @@ public class TravelsRepository {
             ps.setString(5, passengerName != null ? passengerName : "Passenger");
             ps.setString(6, passengerPhone);
             ps.setDouble(7, farePaid);
+            // WHERE NOT EXISTS parameters
+            ps.setLong(8, busId);
+            ps.setString(9, seatNumber);
+            ps.setString(10, travelDate);
             return ps;
         }, keyHolder);
-        return Objects.requireNonNull(keyHolder.getKey()).longValue();
+
+        if (rows == 0 || keyHolder.getKey() == null) {
+            return -1; // seat already confirmed by a concurrent request
+        }
+        return keyHolder.getKey().longValue();
     }
 
     public Map<String, Object> findBookingById(long bookingId) {
