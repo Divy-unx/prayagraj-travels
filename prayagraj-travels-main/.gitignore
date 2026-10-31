@@ -1,0 +1,48 @@
+# ── Environment secrets ───────────────────────────────────────────────────────
+# Block all .env files that contain real credentials.
+# .env.example files are ALLOWED — they are safe templates with placeholder values.
+.env
+.env.local
+.env.example
+.env.*.local
+backend/.env
+frontend-react/.env
+frontend-react/.env.production
+
+# Allow example templates (no real secrets)
+!.env.example
+!backend/.env.example
+!frontend-react/.env.example
+
+# ── Java / Maven ──────────────────────────────────────────────────────────────
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# ── Node / Vite ───────────────────────────────────────────────────────────────
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/.vite/
+frontend-react/coverage/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+nohup.out
+logs/
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.vscode/settings.json
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
