@@ -70,6 +70,22 @@ const auth = axios.create({
   },
 })
 
+let refreshPromise = null
+
+function refreshAccessToken() {
+  if (!refreshPromise) {
+    refreshPromise = auth.post('/refresh')
+      .then(({ data }) => {
+        if (data?.accessToken) setToken(data.accessToken)
+        return data
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+  return refreshPromise
+}
+
 // ── Request interceptors (attach auth token + log) ──────────────────────────
 
 function attachToken(config) {
@@ -121,7 +137,22 @@ function handleResponseError(err) {
   return Promise.reject(err)
 }
 
-api.interceptors.response.use(res => res, handleResponseError)
+api.interceptors.response.use(
+  res => res,
+  async err => {
+    const request = err.config
+    if (err.response?.status === 401 && request && !request._authRetry) {
+      request._authRetry = true
+      try {
+        await refreshAccessToken()
+        return api(request)
+      } catch {
+        // Fall through to the normal error response when refresh is unavailable.
+      }
+    }
+    return handleResponseError(err)
+  }
+)
 auth.interceptors.response.use(
   res => res,
   err => {
@@ -201,6 +232,11 @@ export const authService = {
   },
   me: async () => {
     const { data } = await auth.get('/me')
+    return data
+  },
+  refresh: async () => {
+    const { data } = await auth.post('/refresh')
+    if (data?.accessToken) setToken(data.accessToken)
     return data
   },
   updateProfile: async payload => {

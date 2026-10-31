@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { authService, setAuthToken } from '../services/api'
 
 const AuthContext = createContext()
@@ -6,6 +6,7 @@ const AuthContext = createContext()
 const STORAGE_KEY = 'pt_user'
 
 export function AuthProvider({ children }) {
+  const authCheckStarted = useRef(false)
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null }
     catch { return null }
@@ -20,6 +21,9 @@ export function AuthProvider({ children }) {
 
   // On mount: validate session via /me (works via httpOnly cookie or Bearer token)
   useEffect(() => {
+    if (authCheckStarted.current) return
+    authCheckStarted.current = true
+
     authService.me()
       .then(res => {
         const nextUser = res?.user || res || null
@@ -27,9 +31,16 @@ export function AuthProvider({ children }) {
         if (res?.accessToken) setAuthToken(res.accessToken)
         setUser(nextUser)
       })
-      .catch(() => {
-        setUser(null)
-        setAuthToken(null)
+      .catch(async () => {
+        try {
+          const res = await authService.refresh()
+          const nextUser = res?.user || null
+          if (res?.accessToken) setAuthToken(res.accessToken)
+          setUser(nextUser)
+        } catch {
+          setUser(null)
+          setAuthToken(null)
+        }
       })
       .finally(() => setLoading(false))
   }, [])

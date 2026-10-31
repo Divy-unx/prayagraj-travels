@@ -1,7 +1,10 @@
 package com.travels.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.travels.model.auth.AuthRequest;
 import com.travels.model.auth.RegisterRequest;
 import com.travels.repository.UserRepository;
@@ -14,15 +17,15 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -70,9 +73,6 @@ public class AuthService {
 
     @Value("${app.google.client-id:}")
     private String googleClientId;
-
-    @Value("${app.google.oauth-tokeninfo-url:https://oauth2.googleapis.com/tokeninfo}")
-    private String googleOAuthTokenInfoUrl;
 
     @Value("${app.admin.emails:admin@prayagraj-travels.com}")
     private String adminEmails;
@@ -160,6 +160,10 @@ public class AuthService {
             throw new RateLimitException("Too many login attempts. Please wait before trying again.");
         }
 
+        if (req == null || req.getEmail() == null || req.getEmail().isBlank()
+                || req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new AuthException("Invalid email or password");
+        }
         String email = (req.getEmail() == null ? "" : req.getEmail().trim().toLowerCase());
         Optional<Map<String, Object>> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
@@ -379,44 +383,53 @@ public class AuthService {
 
     /**
      * Authenticate or register via Google ID token.
-     * Calls Google's tokeninfo endpoint to validate and extract claims.
+     * Verifies the Google OpenID Connect ID token signature and claims.
      */
-    @SuppressWarnings("unchecked")
     public Map<String, Object> googleAuth(String credential) {
         if (credential == null || credential.isBlank()) {
             throw new IllegalArgumentException("Google credential is required");
         }
 
-        // Verify with Google tokeninfo
-        String url = googleOAuthTokenInfoUrl + "?id_token=" + credential;
-        Map<String, Object> googleClaims;
+        if (googleClientId == null || googleClientId.isBlank()) {
+            throw new AuthException("Google Sign-In is not configured");
+        }
+
+        GoogleIdToken.Payload googleClaims;
         try {
-            RestTemplate rest = new RestTemplate();
-            String json = rest.getForObject(url, String.class);
-            googleClaims = objectMapper.readValue(json, new TypeReference<>() {});
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(),
+                    JacksonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .setIssuers(List.of("accounts.google.com", "https://accounts.google.com"))
+                    .build();
+            GoogleIdToken idToken = verifier.verify(credential);
+            if (idToken == null) {
+                throw new AuthException("Invalid Google credential");
+            }
+            googleClaims = idToken.getPayload();
         } catch (Exception e) {
-            log.error("Google tokeninfo request failed: {}", e.getMessage());
+            log.warn("Google ID token verification failed: {}", e.getMessage());
             throw new AuthException("Failed to verify Google credential");
         }
 
-        // email_verified must be "true"
-        String emailVerified = (String) googleClaims.get("email_verified");
-        if (!"true".equals(emailVerified)) {
+        if (!Boolean.TRUE.equals(googleClaims.getEmailVerified())) {
             throw new AuthException("Google account email is not verified");
         }
 
-        // Validate audience if client-id is configured
-        if (googleClientId != null && !googleClientId.isBlank()) {
-            String aud = (String) googleClaims.get("aud");
-            if (!googleClientId.equals(aud)) {
-                throw new AuthException("Google token audience mismatch");
-            }
+        String googleId = googleClaims.getSubject();
+        String emailClaim = googleClaims.getEmail();
+        if (googleId == null || googleId.isBlank() || emailClaim == null || emailClaim.isBlank()) {
+            throw new AuthException("Google credential is missing required identity claims");
         }
 
-        String googleId   = (String) googleClaims.get("sub");
-        String email      = ((String) googleClaims.get("email")).trim().toLowerCase();
-        String name       = (String) googleClaims.getOrDefault("name", email);
-        String avatarUrl  = (String) googleClaims.get("picture");
+        String email = emailClaim.trim().toLowerCase();
+        String name = Optional.ofNullable(googleClaims.get("name"))
+                .map(Object::toString)
+                .filter(value -> !value.isBlank())
+                .orElse(email);
+        String avatarUrl = Optional.ofNullable(googleClaims.get("picture"))
+                .map(Object::toString)
+                .orElse(null);
 
         // Try to find by google_id first, then by email
         Optional<Map<String, Object>> userOpt = userRepository.findByGoogleId(googleId);
@@ -430,10 +443,16 @@ public class AuthService {
         if (userOpt.isPresent()) {
             user   = userOpt.get();
             userId = getLong(user, "id");
-            // Link google_id if not already linked
             Object existingGoogleId = user.get("google_id");
             if (existingGoogleId == null || existingGoogleId.toString().isBlank()) {
+                if (getString(user, "password_hash") != null
+                        && !getString(user, "password_hash").isBlank()) {
+                    throw new GoogleAccountLinkException(
+                            "An account already exists for this email. Sign in with your password first, then link Google.");
+                }
                 userRepository.updateGoogleId(userId, googleId, avatarUrl);
+            } else if (!googleId.equals(existingGoogleId.toString())) {
+                throw new AuthException("This email is linked to a different Google account");
             }
             // Ensure email is verified
             Object isVerified = user.get("is_email_verified");
@@ -655,6 +674,10 @@ public class AuthService {
 
     public static class DuplicateEmailException extends RuntimeException {
         public DuplicateEmailException(String msg) { super(msg); }
+    }
+
+    public static class GoogleAccountLinkException extends RuntimeException {
+        public GoogleAccountLinkException(String msg) { super(msg); }
     }
 
     public static class RateLimitException extends RuntimeException {

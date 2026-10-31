@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,6 +59,8 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CREATED).body(body);
         } catch (AuthService.DuplicateEmailException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already registered"));
         } catch (AuthService.DisposableEmailException e) {
             return ResponseEntity.status(422).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
@@ -210,6 +213,8 @@ public class AuthController {
             return ResponseEntity.ok(Map.of("user", result.get("user"), "accessToken", accessToken));
         } catch (AuthService.AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+        } catch (AuthService.GoogleAccountLinkException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
@@ -229,7 +234,9 @@ public class AuthController {
             setAuthCookies(res,
                     (String) result.get("accessToken"),
                     (String) result.get("refreshToken"));
-            return ResponseEntity.ok(Map.of("user", result.get("user")));
+            return ResponseEntity.ok(Map.of(
+                    "user", result.get("user"),
+                    "accessToken", result.get("accessToken")));
         } catch (AuthService.AuthException e) {
             clearAuthCookies(res);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
