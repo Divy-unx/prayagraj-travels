@@ -4,9 +4,6 @@ import logger from '../utils/logger'
 // ── API Configuration ────────────────────────────────────────────────────────
 // VITE_API_BASE_URL must be set in .env (dev) or as a build arg (Docker/CI).
 // Missing it causes a hard error at startup rather than silently hitting a wrong server.
-// Dev:  VITE_API_BASE_URL=http://localhost:8081
-// Prod: VITE_API_BASE_URL=https://your-backend.onrender.com
-
 if (!import.meta.env.VITE_API_BASE_URL) {
   throw new Error('[api.js] VITE_API_BASE_URL is not set. Add it to .env or your deployment environment.')
 }
@@ -21,7 +18,8 @@ const tokenKey = 'pt_token'
 // Auth timeout is 60s because Render free tier cold-starts take 30-60 seconds.
 const TIMEOUTS = {
   default: 20000,
-  search: 30000,
+  search: 60000,
+  suggest: 8000,
   auth: 60000,
 }
 
@@ -238,8 +236,12 @@ export const busService = {
 
   suggestLocations: (query, signal) =>
     requestWithRetry(
-      (sig) => api.get('/locations/suggest', { params: { query }, signal: sig }).then(r => r.data),
-      { retries: 1, signal }
+      (sig) => api.get('/locations/suggest', {
+        params: { query },
+        timeout: TIMEOUTS.suggest,
+        signal: sig,
+      }).then(r => r.data),
+      { retries: 0, signal }
     ),
 
   search: (source, destination, params = {}, signal) =>
@@ -249,7 +251,9 @@ export const busService = {
         timeout: TIMEOUTS.search,
         signal: sig,
       }).then(r => r.data),
-      { retries: RETRY_CONFIG.maxRetries, signal }
+      // One retry is enough to cover a sleeping backend without keeping the
+      // search screen blocked for several minutes when the service is down.
+      { retries: 1, signal }
     ),
 
   getSeats: (busId, travelDate) => api.get('/seats', { params: { busId, travelDate } }).then(r => r.data),

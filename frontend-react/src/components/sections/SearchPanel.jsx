@@ -35,8 +35,8 @@ function LocationDropdown({ label, value, onChange, placeholder, compact = false
 
     debounceRef.current = setTimeout(async () => {
       const q = query?.trim() || ''
-      if (!q) {
-        setSuggestions(STOPS)
+      if (q.length < 2) {
+        setSuggestions(q ? STOPS.filter(stop => stop.toLowerCase().includes(q.toLowerCase())).slice(0, 10) : STOPS)
         return
       }
 
@@ -58,7 +58,7 @@ function LocationDropdown({ label, value, onChange, placeholder, compact = false
           STOPS.filter(stop => stop.toLowerCase().includes(q.toLowerCase())).slice(0, 10)
         )
       }
-    }, 200)
+    }, 350)
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
