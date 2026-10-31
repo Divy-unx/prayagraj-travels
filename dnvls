@@ -1,0 +1,133 @@
+[33mcommit 68917b3402c508f5cad82bb4ecd1c6bb1d383854[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Divyanshu Mishra <216733022+Divy-unx@users.noreply.github.com>
+Date:   Sat Oct 31 19:52:07 2026 +0530
+
+    Fix the issue.4
+
+M	frontend-react/src/components/sections/SearchPanel.jsx
+M	frontend-react/src/services/api.js
+
+[33mcommit b8f12711802bfecd6bea33e6fbbab937a176f0d5[m
+Author: Divyanshu Mishra <216733022+Divy-unx@users.noreply.github.com>
+Date:   Wed Oct 28 23:59:33 2026 +0530
+
+    Fix MySQL datasource configuration
+
+M	backend/src/main/resources/application.properties
+
+[33mcommit 37e5f6132043abea1c93a805b5446520155b237d[m
+Author: Divyanshu Mishra <216733022+Divy-unx@users.noreply.github.com>
+Date:   Wed Oct 28 10:38:43 2026 +0530
+
+    Enable SSL for hosted MySQL connection
+
+M	backend/src/main/resources/application.properties
+
+[33mcommit 3985eaab25716fe3d0ff26b2df8afc6e93c91e53[m
+Author: Prynshumishra <prynshu09@gmail.com>
+Date:   Sun Jul 19 12:00:00 2026 +0530
+
+    Update README
+
+M	README.md
+
+[33mcommit ae0483c9dc40c2859fa6914665ee479ad54a1e06[m
+Author: Prynshumishra <prynshu09@gmail.com>
+Date:   Sun May 17 14:00:02 2026 +0530
+
+    fix: map booking error codes to correct HTTP statuses and document ghost-booking cleanup
+    
+    - HOLD_EXPIRED  -> 422 Unprocessable Entity (hold timed out, user must re-select seat)
+    - NOT_YOUR_HOLD -> 403 Forbidden (hold belongs to a different user)
+    - ALREADY_BOOKED -> 409 Conflict (seat already confirmed in DB)
+    - Unknown failures -> 500 Internal Server Error
+    Previously all failures collapsed to 409, making HOLD_EXPIRED and NOT_YOUR_HOLD
+    indistinguishable from seat conflicts on the frontend.
+    
+    Also adds a commented-out ghost-booking cleanup query to schema.sql for one-time
+    manual execution: cancels CONFIRMED bookings silently inserted during the 500 era
+    (when the missing-column bug caused findBookingById to throw after a successful INSERT).
+
+M	backend/src/main/java/com/travels/controller/TravelsController.java
+M	backend/src/main/resources/schema.sql
+
+[33mcommit 5f832708722d2e7347704a2992e6b624a21abf25[m
+Author: Prynshumishra <prynshu09@gmail.com>
+Date:   Sun May 17 12:55:26 2026 +0530
+
+    fix: resolve all production-level bugs
+    
+    1. schema.sql – Add ALTER TABLE migrations for columns missing in older
+       production DBs (booked_at, cancelled_at, refund_status, refund_amount
+       on bookings; auth_provider, google_id, avatar_url, is_email_verified,
+       is_active, last_login_at on users). Fixes the 500 on POST /book.
+       Also resets is_active=1 for users deactivated by a bad migration default,
+       fixing the 401 on login for all existing accounts.
+    
+    2. schema.sql + application.properties – Enable spring.sql.init.continue-on-error
+       so ALTER TABLE statements fail silently on databases that already have the
+       column (MySQL <8.0 compatibility).
+    
+    3. EmailService.java + AsyncConfig.java – Mark all three email methods
+       @Async("emailTaskExecutor") and add a dedicated ThreadPoolTaskExecutor.
+       Forgot-password now returns immediately instead of blocking on SMTP.
+    
+    4. AuthController.java – Replace hard-coded secure(false)/SameSite=Lax with
+       SECURE_COOKIE env var (defaults true). In production the cookies are now
+       Secure + SameSite=None, which is required for cross-origin cookie delivery
+       between the Vercel frontend and the Render backend.
+    
+    5. TravelsService.java – Replace redis.get() + redis.delete() with the atomic
+       redis.getAndDelete() so two concurrent booking requests from the same user
+       cannot both claim the same hold, eliminating the double-booking race condition.
+    
+    6. TravelsRepository.java – Rewrite confirmBooking INSERT as
+       INSERT … SELECT … WHERE NOT EXISTS (CONFIRMED booking for same seat+date)
+       providing a DB-level safety net. Returns -1 when the seat was already taken
+       so the service layer can return ALREADY_BOOKED instead of a 500.
+
+A	backend/src/main/java/com/travels/config/AsyncConfig.java
+M	backend/src/main/java/com/travels/controller/AuthController.java
+M	backend/src/main/java/com/travels/repository/TravelsRepository.java
+M	backend/src/main/java/com/travels/service/EmailService.java
+M	backend/src/main/java/com/travels/service/TravelsService.java
+M	backend/src/main/resources/application.properties
+M	backend/src/main/resources/schema.sql
+
+[33mcommit 6766e6e574e1ecce22457db804ccb81d8bf53758[m
+Author: Prynshumishra <prynshu09@gmail.com>
+Date:   Fri May 8 13:19:47 2026 +0530
+
+    bugs fixed
+
+M	backend/src/main/java/com/travels/service/AuthService.java
+M	backend/src/main/resources/application.properties
+
+[33mcommit 8e3c63b89c67601455baae2f800916b72ac3199c[m
+Author: Prynshumishra <prynshu09@gmail.com>
+Date:   Fri May 8 11:38:12 2026 +0530
+
+    fixed the bugs
+
+M	frontend-react/src/pages/auth/LoginPage.jsx
+M	frontend-react/src/pages/auth/RegisterPage.jsx
+M	frontend-react/src/services/api.js
+
+[33mcommit 2e40e4eb93c313ce8bd43935b88147008c89beae[m
+Author: Prynshumishra <prynshu09@gmail.com>
+Date:   Fri May 8 11:25:38 2026 +0530
+
+    fixed the .env
+
+A	.env.example
+M	.gitignore
+M	docker-compose.yml
+
+[33mcommit a5b7f872a4f9ca18aff076c5049db5eb858bd3c7[m
+Author: Prynshumishra <prynshu09@gmail.com>
+Date:   Fri May 8 11:11:00 2026 +0530
+
+    Fixed the routes
+
+M	backend/src/main/java/com/travels/controller/AuthController.java
+M	frontend-react/src/context/AuthContext.jsx
