@@ -104,36 +104,40 @@ public class AuthService {
      * Register a new local user and return auth tokens immediately.
      */
     public Map<String, Object> register(RegisterRequest req) {
-        // Basic null checks
         if (req == null || req.getName() == null || req.getName().isBlank()) {
             throw new IllegalArgumentException("Name is required");
         }
+
         if (req.getEmail() == null || req.getEmail().isBlank()) {
             throw new IllegalArgumentException("Email is required");
         }
+
         if (req.getPassword() == null || req.getPassword().isBlank()) {
             throw new IllegalArgumentException("Password is required");
         }
 
         String email = req.getEmail().trim().toLowerCase();
+
         validateEmailFormat(email);
         validatePasswordStrength(req.getPassword());
 
-        // Check for duplicate email
         if (userRepository.findByEmail(email).isPresent()) {
             throw new DuplicateEmailException("Email already registered");
         }
 
         String role = isAdminEmail(email) ? "ADMIN" : "USER";
+
         long userId = userRepository.create(
                 req.getName().trim(),
                 email,
                 req.getPhone(),
                 passwordEncoder.encode(req.getPassword()),
-                role);
+                role
+        );
 
         Map<String, Object> user = userRepository.findById(userId)
-            .orElseThrow(() -> new AuthException("User creation failed"));
+                .orElseThrow(() -> new AuthException("User creation failed"));
+
         String accessToken = generateAccessToken(buildUserMap(user));
         String refreshToken = generateRefreshToken(userId);
 
@@ -141,8 +145,9 @@ public class AuthService {
         result.put("user", buildUserResponse(user));
         result.put("accessToken", accessToken);
         result.put("refreshToken", refreshToken);
+
         return result;
-        }
+    }
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
