@@ -31,13 +31,8 @@ export default function LoginPage() {
     }, 8000)
     try {
       const user = await login({ email: form.email.trim().toLowerCase(), password: form.password })
-      if (user?.isEmailVerified === false || user?.is_email_verified === false) {
-        toast('Please verify your email to continue.', { icon: '📧' })
-        navigate('/verify-email', { replace: true })
-      } else {
-        toast.success(`Welcome back, ${user?.name?.split(' ')[0] || 'there'}!`)
-        navigate(from, { replace: true })
-      }
+      toast.success(`Welcome back, ${user?.name?.split(' ')[0] || 'there'}!`)
+      navigate(from, { replace: true })
     } catch (err) {
       toast.error(err.message || 'Login failed')
     } finally {

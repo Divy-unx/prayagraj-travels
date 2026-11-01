@@ -81,25 +81,18 @@ export function AuthProvider({ children }) {
     return nextUser
   }, [user])
 
-  const markEmailVerified = useCallback(() => {
-    setUser(prev => prev ? { ...prev, isEmailVerified: true } : prev)
-  }, [])
-
   const isLoggedIn = !!user
-  const isEmailVerified = user?.isEmailVerified === true || user?.is_email_verified === true
 
   return (
     <AuthContext.Provider value={{
       user,
       loading,
       isLoggedIn,
-      isEmailVerified,
       login,
       register,
       googleLogin,
       logout,
       updateProfile,
-      markEmailVerified,
     }}>
       {children}
     </AuthContext.Provider>

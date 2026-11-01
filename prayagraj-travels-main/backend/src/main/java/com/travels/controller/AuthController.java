@@ -59,6 +59,8 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CREATED).body(body);
         } catch (AuthService.DuplicateEmailException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (AuthService.DuplicatePhoneException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already registered"));
         } catch (AuthService.DisposableEmailException e) {

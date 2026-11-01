@@ -79,11 +79,11 @@ export default function RegisterPage() {
       await register({
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
-        phone: form.phone.trim() || null,
+        phone: form.phone.trim(),
         password: form.password,
       })
-      toast.success('Account created! Check your email for a verification code.')
-      navigate('/verify-email', { replace: true })
+      toast.success('Account created successfully!')
+      navigate('/', { replace: true })
     } catch (err) {
       toast.error(err.message || 'Registration failed')
       setStep(1)
@@ -200,9 +200,9 @@ export default function RegisterPage() {
                 placeholder="you@example.com" icon={Mail} autoComplete="email" required
               />
               <FloatingInput
-                id="phone" label="Phone number (optional)" type="tel" value={form.phone}
+                id="phone" label="Phone number" type="tel" value={form.phone}
                 onChange={e => set('phone', e.target.value)}
-                placeholder="+91 98765 43210" icon={Phone}
+                placeholder="+91 98765 43210" icon={Phone} required autoComplete="tel"
               />
               <button
                 type="submit"

@@ -46,12 +46,12 @@ public class AuthService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     // Redis TTL constants
-    private static final long OTP_VERIFY_TTL_SECONDS = 600L;   // 10 minutes
+    private static final long OTP_VERIFY_TTL_SECONDS = 600L;   // legacy email verification endpoint
     private static final long OTP_RESET_TTL_SECONDS  = 900L;   // 15 minutes
 
     // Rate limit constants
-    private static final int  OTP_RATE_MAX      = 5;
-    private static final long OTP_RATE_WINDOW   = 3600L;
+    private static final int  OTP_RATE_MAX       = 5;
+    private static final long OTP_RATE_WINDOW    = 3600L;
     private static final int  LOGIN_RATE_MAX     = 10;
     private static final long LOGIN_RATE_WINDOW  = 900L;
 
@@ -101,21 +101,28 @@ public class AuthService {
     // ── Registration ──────────────────────────────────────────────────────────
 
     /**
-     * Register a new local user, send a verification OTP and return auth tokens.
+     * Register a new local user and return auth tokens immediately.
      */
     public Map<String, Object> register(RegisterRequest req) {
         // Basic null checks
+        if (req == null) {
+            throw new IllegalArgumentException("Registration details are required");
+        }
         if (req.getName() == null || req.getName().isBlank()) {
             throw new IllegalArgumentException("Name is required");
         }
         if (req.getEmail() == null || req.getEmail().isBlank()) {
             throw new IllegalArgumentException("Email is required");
         }
+        if (req.getPhone() == null || req.getPhone().isBlank()) {
+            throw new IllegalArgumentException("Phone number is required");
+        }
         if (req.getPassword() == null || req.getPassword().isBlank()) {
             throw new IllegalArgumentException("Password is required");
         }
 
         String email = req.getEmail().trim().toLowerCase();
+        String phone = req.getPhone().trim();
         validateEmailFormat(email);
         validatePasswordStrength(req.getPassword());
 
@@ -123,21 +130,17 @@ public class AuthService {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new DuplicateEmailException("Email already registered");
         }
+        if (userRepository.findByPhone(phone).isPresent()) {
+            throw new DuplicatePhoneException("Phone number already registered");
+        }
 
         String role = isAdminEmail(email) ? "ADMIN" : "USER";
         long userId = userRepository.create(
                 req.getName().trim(),
                 email,
-                req.getPhone(),
+                phone,
                 passwordEncoder.encode(req.getPassword()),
                 role);
-
-        // Send verification OTP asynchronously (errors are swallowed inside sendVerificationOtp)
-        try {
-            sendVerificationOtp(userId);
-        } catch (Exception e) {
-            log.warn("Could not send verification OTP during registration for userId={}: {}", userId, e.getMessage());
-        }
 
         Map<String, Object> user = userRepository.findById(userId).orElseThrow();
         String accessToken  = generateAccessToken(buildUserMap(user));
@@ -681,6 +684,10 @@ public class AuthService {
 
     public static class DuplicateEmailException extends RuntimeException {
         public DuplicateEmailException(String msg) { super(msg); }
+    }
+
+    public static class DuplicatePhoneException extends RuntimeException {
+        public DuplicatePhoneException(String msg) { super(msg); }
     }
 
     public static class GoogleAccountLinkException extends RuntimeException {

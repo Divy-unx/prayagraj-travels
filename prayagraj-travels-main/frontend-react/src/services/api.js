@@ -249,14 +249,6 @@ export const authService = {
     const { data } = await auth.put('/profile', payload)
     return data
   },
-  verifyEmail: async otp => {
-    const { data } = await auth.post('/verify-email', { otp })
-    return data
-  },
-  resendVerification: async () => {
-    const { data } = await auth.post('/resend-verification')
-    return data
-  },
   forgotPassword: async email => {
     const { data } = await auth.post('/forgot-password', { email })
     return data

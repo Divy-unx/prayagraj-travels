@@ -1,11 +1,5 @@
 package com.travels.repository;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Repository;
-
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
@@ -13,6 +7,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class UserRepository {
@@ -24,6 +24,12 @@ public class UserRepository {
 
     public Optional<Map<String, Object>> findByEmail(String email) {
         List<Map<String, Object>> rows = jdbc.queryForList("SELECT * FROM users WHERE email = ?", email);
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
+    }
+
+    public Optional<Map<String, Object>> findByPhone(String phone) {
+        if (phone == null || phone.isBlank()) return Optional.empty();
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT * FROM users WHERE phone = ?", phone);
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
 
