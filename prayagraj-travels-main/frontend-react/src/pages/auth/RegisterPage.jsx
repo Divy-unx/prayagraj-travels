@@ -277,21 +277,39 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {/* Terms */}
-              <label className="flex items-start gap-3 cursor-pointer group">
-                <div className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                  agreed ? 'bg-primary-600 border-primary-600' : 'border-slate-300 group-hover:border-primary-400'
-                }`}>
-                  {agreed && <Check className="w-2.5 h-2.5 text-white" />}
-                </div>
-                <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="sr-only" />
-                <span className="text-xs text-slate-500 leading-relaxed">
-                  I agree to the{' '}
-                  <a href="#" className="text-primary-600 font-semibold hover:underline">Terms of Service</a>{' '}
+              {/* Terms and Conditions */}
+              <div className="flex items-start gap-3">
+                <input
+                  id="termsAccepted"
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.currentTarget.checked)}
+                  className="relative z-10 mt-0.5 h-4 w-4 shrink-0 cursor-pointer appearance-auto accent-primary-600"
+                />
+
+                <div className="text-xs text-slate-500 leading-relaxed">
+                  <label htmlFor="termsAccepted" className="cursor-pointer select-none">
+                    I agree to the
+                  </label>{' '}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 font-semibold hover:underline"
+                  >
+                    Terms of Service
+                  </a>{' '}
                   and{' '}
-                  <a href="#" className="text-primary-600 font-semibold hover:underline">Privacy Policy</a>
-                </span>
-              </label>
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 font-semibold hover:underline"
+                  >
+                    Privacy Policy
+                  </a>
+                </div>
+              </div>
 
               {/* Buttons */}
               <div className="flex gap-3 mt-2">
@@ -304,7 +322,7 @@ export default function RegisterPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || !agreed}
+                  disabled={loading}
                   className="flex-[2] flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-bold py-3.5 rounded-xl shadow-btn hover:shadow-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-sm"
                 >
                   {loading ? (

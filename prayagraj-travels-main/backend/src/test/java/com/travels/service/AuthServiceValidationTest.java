@@ -37,7 +37,7 @@ class AuthServiceValidationTest {
         authService = new AuthService(
                 userRepository, redisTemplate, emailService, rateLimitService,
                 disposableEmailService, new JwtService(new ObjectMapper(), "a".repeat(32), 15),
-                new BCryptPasswordEncoder(), jdbcTemplate, new ObjectMapper());
+                new BCryptPasswordEncoder(), jdbcTemplate);
     }
 
     @Test

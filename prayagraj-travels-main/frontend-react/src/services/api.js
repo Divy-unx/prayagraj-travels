@@ -141,7 +141,7 @@ api.interceptors.response.use(
   res => res,
   async err => {
     const request = err.config
-    if (err.response?.status === 401 && request && !request._authRetry) {
+    if (err.response?.status === 401 && request && !request.skipAuthRefresh && !request._authRetry) {
       request._authRetry = true
       try {
         await refreshAccessToken()
@@ -160,7 +160,13 @@ auth.interceptors.response.use(
     if (err.code === 'ECONNABORTED' || msg.includes('timeout')) {
       msg = 'Server is starting up, please try again in a moment.'
     }
-    logger.error('Auth', 'Auth request failed', { message: msg })
+    const isExpectedAnonymousCheck = err.response?.status === 401
+      && ['/me', '/refresh'].includes(err.config?.url)
+    if (isExpectedAnonymousCheck) {
+      logger.debug('Auth', 'No active session', { endpoint: err.config?.url })
+    } else {
+      logger.error('Auth', 'Auth request failed', { message: msg })
+    }
     return Promise.reject(new Error(msg))
   }
 )
@@ -276,6 +282,7 @@ export const busService = {
         params: { query },
         timeout: TIMEOUTS.suggest,
         signal: sig,
+        skipAuthRefresh: true,
       }).then(r => r.data),
       { retries: 0, signal }
     ),

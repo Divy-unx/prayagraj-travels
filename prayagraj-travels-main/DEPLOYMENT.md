@@ -54,6 +54,7 @@ MAIL_USERNAME=your_gmail@gmail.com
 MAIL_PASSWORD=your_16char_app_password
 GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_OIDC_ISSUERS=<google-issuer-list>
 ```
 
 Leave DB/Redis as-is for Docker — the `docker-compose.yml` overrides `DB_HOST` and `REDIS_HOST` to the container service names.
@@ -166,6 +167,7 @@ MAIL_PASSWORD=your_app_password
 FRONTEND_URL=<frontend-origin>
 GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_OIDC_ISSUERS=<google-issuer-list>
 ADMIN_EMAILS=admin@your-domain.com
 ```
 

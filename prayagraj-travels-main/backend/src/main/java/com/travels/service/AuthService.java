@@ -1,6 +1,5 @@
 package com.travels.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -26,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -63,7 +63,6 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
-    private final ObjectMapper objectMapper;
 
     @Value("${app.jwt.access-expiry-minutes:15}")
     private long accessExpiryMinutes;
@@ -73,6 +72,9 @@ public class AuthService {
 
     @Value("${app.google.client-id:}")
     private String googleClientId;
+
+    @Value("${app.google.issuers:}")
+    private String googleIssuers;
 
     @Value("${app.admin.emails:admin@prayagraj-travels.com}")
     private String adminEmails;
@@ -85,8 +87,7 @@ public class AuthService {
             DisposableEmailService disposableEmailService,
             JwtService jwtService,
             PasswordEncoder passwordEncoder,
-            JdbcTemplate jdbcTemplate,
-            ObjectMapper objectMapper) {
+            JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.redisTemplate = redisTemplate;
         this.emailService = emailService;
@@ -95,7 +96,6 @@ public class AuthService {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.jdbcTemplate = jdbcTemplate;
-        this.objectMapper = objectMapper;
     }
 
     // ── Registration ──────────────────────────────────────────────────────────
@@ -393,6 +393,13 @@ public class AuthService {
         if (googleClientId == null || googleClientId.isBlank()) {
             throw new AuthException("Google Sign-In is not configured");
         }
+        List<String> issuers = Arrays.stream(googleIssuers.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .toList();
+        if (issuers.isEmpty()) {
+            throw new AuthException("Google issuer configuration is missing");
+        }
 
         GoogleIdToken.Payload googleClaims;
         try {
@@ -400,7 +407,7 @@ public class AuthService {
                     GoogleNetHttpTransport.newTrustedTransport(),
                     JacksonFactory.getDefaultInstance())
                     .setAudience(Collections.singletonList(googleClientId))
-                    .setIssuers(List.of("accounts.google.com", "https://accounts.google.com"))
+                    .setIssuers(issuers)
                     .build();
             GoogleIdToken idToken = verifier.verify(credential);
             if (idToken == null) {
