@@ -101,11 +101,11 @@ public class AuthService {
     // ── Registration ──────────────────────────────────────────────────────────
 
     /**
-     * Register a new local user, send a verification OTP and return auth tokens.
+     * Register a new local user and return auth tokens immediately.
      */
     public Map<String, Object> register(RegisterRequest req) {
         // Basic null checks
-        if (req.getName() == null || req.getName().isBlank()) {
+        if (req == null || req.getName() == null || req.getName().isBlank()) {
             throw new IllegalArgumentException("Name is required");
         }
         if (req.getEmail() == null || req.getEmail().isBlank()) {
@@ -132,7 +132,17 @@ public class AuthService {
                 passwordEncoder.encode(req.getPassword()),
                 role);
 
-     
+        Map<String, Object> user = userRepository.findById(userId)
+            .orElseThrow(() -> new AuthException("User creation failed"));
+        String accessToken = generateAccessToken(buildUserMap(user));
+        String refreshToken = generateRefreshToken(userId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("user", buildUserResponse(user));
+        result.put("accessToken", accessToken);
+        result.put("refreshToken", refreshToken);
+        return result;
+        }
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
