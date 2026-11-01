@@ -132,23 +132,7 @@ public class AuthService {
                 passwordEncoder.encode(req.getPassword()),
                 role);
 
-        // Send verification OTP asynchronously (errors are swallowed inside sendVerificationOtp)
-        try {
-            sendVerificationOtp(userId);
-        } catch (Exception e) {
-            log.warn("Could not send verification OTP during registration for userId={}: {}", userId, e.getMessage());
-        }
-
-        Map<String, Object> user = userRepository.findById(userId).orElseThrow();
-        String accessToken  = generateAccessToken(buildUserMap(user));
-        String refreshToken = generateRefreshToken(userId);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("user", buildUserResponse(user));
-        result.put("accessToken", accessToken);
-        result.put("refreshToken", refreshToken);
-        return result;
-    }
+     
 
     // ── Login ─────────────────────────────────────────────────────────────────
 

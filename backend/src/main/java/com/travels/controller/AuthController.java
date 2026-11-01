@@ -55,7 +55,7 @@ public class AuthController {
             java.util.Map<String, Object> body = new java.util.HashMap<>();
             body.put("user", result.get("user"));
             body.put("accessToken", accessToken);
-            body.put("message", "Registration successful. Please verify your email.");
+            body.put("message", "Registration successful.");
             return ResponseEntity.status(HttpStatus.CREATED).body(body);
         } catch (AuthService.DuplicateEmailException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
