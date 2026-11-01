@@ -2,33 +2,6 @@ import { Shield, Zap, Heart, Award } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import { STATS } from '../utils/constants'
-import founderImage from '../assets/team/divyanshu.jpeg'
-import operationsImage from '../assets/team/deepak.jpeg'
-import developerImage from '../assets/team/shivaji.jpeg'
-import customerSuccessImage from '../assets/team/kislay.jpeg'
-
-const TEAM = [
-  {
-    name: 'Divyanshu Mishra',
-    role: 'Founder & CEO',
-    image: founderImage
-  },
-  {
-    name: 'Desh Deepak',
-    role: 'Head of Operations',
-    image: operationsImage
-  },
-  {
-    name: 'Shivaji Singh',
-    role: 'Lead Developer',
-    image: developerImage
-  },
-  {
-    name: 'Kislay Sahu',
-    role: 'Customer Success',
-    image: customerSuccessImage
-  },
-]
 
 const milestones = [
   { year: '2023', event: 'PrayagTravels founded with 10 buses on 2 routes' },
@@ -129,27 +102,6 @@ export default function AboutPage() {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* The Team */}
-      <section className="py-16 bg-slate-50 border-t border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <span className="section-tag">👥 Our Team</span>
-            <h2 className="section-title mt-1">The People Behind PrayagTravels</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            {TEAM.map(member => (
-              <div key={member.name} className="bg-white rounded-2xl shadow-card p-4 text-center border border-black-200 hover:-translate-y-1 hover:shadow-card-hover transition-all duration-300">
-                <div className="mx-auto mb-4 h-36 w-36 rounded border-4 border-primary-10 bg-slate-100 overflow-hidden">
-                  <img src={member.image} alt={member.name} className="h-full w-full object-cover object-top" />
-                </div>
-                <h3 className="font-bold text-slate-900 text-lg">{member.name}</h3>
-                <p className="text-sm text-slate-500 font-medium mt-1">{member.role}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
